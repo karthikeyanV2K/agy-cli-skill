@@ -1,0 +1,80 @@
+# AGY CLI Configuration Example
+# Copy this file to .agyrc and customize for your environment
+
+orchestrator:
+  # Model to use for orchestration (supports any Oz-compatible model)
+  model: "claude-4-5-sonnet"
+  # Maximum concurrent child agents
+  max_concurrent_agents: 4
+  # Research budget - prevents infinite research loops
+  research_budget:
+    max_rounds: 3
+  # Review budget - limits review iterations
+  review_budget:
+    max_rounds: 2
+  # Debug budget - limits fix iterations
+  debug_budget:
+    max_iterations: 5
+
+# Agent permission model - controls what each agent can do
+agents:
+  researcher:
+    permissions: [read, search, execute]
+    description: "Investigates knowledge gaps, queries authoritative sources"
+  architect:
+    permissions: [read, search, plan]
+    description: "Designs architecture, creates implementation plans"
+  implementer:
+    permissions: [read, write, execute]
+    description: "Writes code, executes builds and tests"
+  tester:
+    permissions: [read, write:tests, execute]
+    description: "Runs validation suite, writes test cases"
+  reviewer:
+    permissions: [read, search, execute, reject]
+    description: "Adversarial review, can REJECT implementation"
+  debugger:
+    permissions: [read, write, execute]
+    description: "Root cause analysis, applies fixes"
+
+# Enabled skills (all enabled by default)
+skills:
+  - engineering
+  - research
+  - architecture
+  - implementation
+  - debugging
+  - testing
+  - review
+
+# Execution settings
+execution:
+  # Default working directory (relative to project root)
+  working_directory: "."
+  # Timeout for individual agent operations (seconds)
+  agent_timeout: 300
+  # Enable verbose logging
+  verbose: false
+  # Save execution traces for debugging
+  save_traces: true
+  traces_directory: ".agy/traces"
+
+# Git integration
+git:
+  # Auto-commit after successful task completion
+  auto_commit: false
+  # Commit message template
+  commit_template: "agy: {task_summary}\n\n{agent_summary}"
+  # Create PR after completion
+  create_pr: false
+
+# Notification settings
+notifications:
+  # Webhook URL for completion notifications
+  webhook_url: ""
+  # Notify on task start
+  on_start: false
+  # Notify on task completion
+  on_complete: true
+  # Notify on failure
+  on_failure: true
