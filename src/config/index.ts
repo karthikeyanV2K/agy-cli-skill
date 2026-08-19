@@ -12,6 +12,7 @@ import type {
   SkillConfig,
   AgentType,
 } from '../types/index.js';
+export type { SkillConfig } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

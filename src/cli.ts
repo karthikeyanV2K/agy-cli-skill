@@ -7,7 +7,8 @@ import { readFileSync } from 'node:fs';
 
 import { loadConfig, getDefaultConfig, saveConfig, type Config } from './config/index.js';
 import { OutputFormatter, getFormatter, type VerificationChecklist } from './output/formatter.js';
-import type { Phase, BudgetSnapshot, Assumption, Decision, ResearchFinding, KnowledgeGap, ReviewFinding, SignOff, GateStatus } from './types/index.js';
+import { createSkillRegistry, type PullResult, type Skill } from './skills/index.js';
+import type { Phase, BudgetSnapshot, Assumption, Decision, ResearchFinding, KnowledgeGap, ReviewFinding, SignOff, GateStatus, AgentType } from './types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -324,6 +325,101 @@ async function runDecisionsCommand(): Promise<void> {
   }
 }
 
+async function runPullCommand(sourceUrl: string, options: any): Promise<void> {
+  const formatter = createFormatter(options.verbose, options.noColor);
+  
+  try {
+    formatter.banner('AGY Skill Pull', `Pulling skills from ${sourceUrl}`);
+    
+    const config = loadConfig();
+    const registry = createSkillRegistry(config);
+    
+    formatter.startSpinner('pull', { text: 'Cloning repository and finding skills...', color: 'blue' });
+    
+    const result: PullResult = await registry.pull(sourceUrl);
+    
+    if (result.success) {
+      formatter.succeedSpinner('pull', `Successfully pulled ${result.skills.length} skill(s)`);
+      
+      for (const skill of result.skills) {
+        formatter.info(`  • ${skill.name} v${skill.version} - ${skill.description || 'No description'}`);
+        if (skill.triggers.length > 0) {
+          formatter.info(`    Triggers: ${skill.triggers.join(', ')}`);
+        }
+        formatter.info(`    Target agents: ${skill.targetAgents.join(', ')}`);
+      }
+      
+      formatter.success('Skills are now available for AGY engineering flow');
+      formatter.info('Run `agy task "your task"` to use them automatically');
+    } else {
+      formatter.failSpinner('pull', 'Failed to pull skills');
+      for (const error of result.errors) {
+        formatter.error('Pull error', error);
+      }
+      process.exit(1);
+    }
+  } catch (error) {
+    formatter.error(
+      'Pull command failed',
+      error instanceof Error ? error.message : String(error)
+    );
+    process.exit(1);
+  } finally {
+    formatter.cleanup();
+  }
+}
+
+async function runSkillCommand(action: string, name?: string): Promise<void> {
+  const formatter = createFormatter(false, false);
+  
+  try {
+    const config = loadConfig();
+    const registry = createSkillRegistry(config);
+    
+    switch (action) {
+      case 'list': {
+        const skills = registry.listSkills();
+        if (skills.length === 0) {
+          formatter.info('No skills installed. Use `agy pull <url>` to install skills.');
+        } else {
+          formatter.banner('Installed Skills', `${skills.length} skill(s) available`);
+          for (const skill of skills) {
+            formatter.info(`  • ${skill.name} v${skill.version} - ${skill.description || 'No description'}`);
+            if (skill.triggers.length > 0) {
+              formatter.info(`    Triggers: ${skill.triggers.join(', ')}`);
+            }
+          }
+        }
+        break;
+      }
+      case 'remove': {
+        if (!name) {
+          formatter.error('Skill name required for remove action');
+          process.exit(1);
+        }
+        const removed = registry.removeSkill(name);
+        if (removed) {
+          formatter.success(`Skill '${name}' removed`);
+        } else {
+          formatter.error('Remove failed', `Skill '${name}' not found`);
+          process.exit(1);
+        }
+        break;
+      }
+      default:
+        formatter.error(`Unknown skill action: ${action}`);
+        formatter.info('Available actions: list, remove');
+        process.exit(1);
+    }
+  } catch (error) {
+    formatter.error(
+      'Skill command failed',
+      error instanceof Error ? error.message : String(error)
+    );
+    process.exit(1);
+  }
+}
+
 function main(): void {
   const program = new Command();
   
@@ -357,11 +453,25 @@ function main(): void {
     .description('Manage assumption ledger')
     .action(runAssumptionsCommand);
 
-  // Decisions command
+// Decisions command
   program
     .command('decisions')
     .description('List decision ledger')
     .action(runDecisionsCommand);
+
+  // Pull command
+  program
+    .command('pull <sourceUrl>')
+    .description('Pull skills from a GitHub repository')
+    .option('--verbose', 'Enable verbose output', false)
+    .option('--no-color', 'Disable colored output', false)
+    .action(runPullCommand);
+
+  // Skill command
+  program
+    .command('skill <action> [name]')
+    .description('Manage installed skills (list, remove)')
+    .action(runSkillCommand);
 
   // Version command
   program

@@ -384,7 +384,7 @@ export interface OrchestratorConfig {
 export interface SkillConfig {
   name: string;
   version: string;
-  description: string;
+  description?: string;
   triggers: string[];
   permissions: AgentPermissions;
 }

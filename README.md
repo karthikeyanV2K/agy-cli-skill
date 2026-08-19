@@ -5,8 +5,22 @@
 [![GitHub Stars](https://img.shields.io/github/stars/karthikeyanV2K/agy-cli?style=social)](https://github.com/karthikeyanV2K/agy-cli/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/karthikeyanV2K/agy-cli)](https://github.com/karthikeyanV2K/agy-cli/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/karthikeyanV2K/agy-cli)](https://github.com/karthikeyanV2K/agy-cli/commits/main)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 
-> **AGY CLI** is a production-grade, multi-agent orchestration framework that brings rigorous software engineering discipline to AI-assisted development. Built on a **Research → Plan → Implement → Verify → Review** pipeline with specialized agents, skills, and verification gates.
+> **AGY CLI** is a production-grade, multi-agent orchestration framework that brings rigorous software engineering discipline to AI-assisted development. Built on a **DISCOVER → RESEARCH → ANALYSIS → PLANNING → IMPLEMENTATION → VALIDATION → DEBUGGING → REVIEW → COMPLETE** pipeline with specialized agents, external skill support, mechanical gate verification, and configurable budgets.
+
+## 🎉 New in v0.1.0: External Skill Integration
+
+```bash
+# Pull skills from any GitHub repository
+agy pull https://github.com/rmyndharis/antigravity-skills
+
+# Skills automatically inject into AGY engineering flow
+agy task "build a Rust driver"
+```
+
+Pulled skills become part of AGY's existing agent flow — **no separate skill system**. The skills are injected as agent capabilities/instructions into Researcher, Architect, Implementer, Validator, Debugger, and Reviewer contexts.
 
 ---
 
@@ -18,11 +32,36 @@ Most AI coding tools generate code first, think later. **AGY CLI reverses that**
 |----------------------|------------------|
 | ❌ Guess → Code → Debug | ✅ Research → Plan → Implement → Verify |
 | ❌ Single model, single prompt | ✅ Specialized agents with distinct permissions |
-| ❌ No verification gates | ✅ Architecture gate, Test gate, Review gate |
+| ❌ No verification gates | ✅ Mechanical gates: Architecture, Test, Review |
 | ❌ Hardcoded assumptions | ✅ Assumption ledger + Decision ledger |
 | ❌ "Looks good" reviews | ✅ Adversarial review with REJECT power |
+| ❌ Fixed built-in capabilities | ✅ Pull external skills from GitHub |
 
 ---
+
+## 🔌 Skill Integration Architecture
+
+```mermaid
+flowchart TD
+    User[USER TASK] --> Pull[AGY PULL]
+    Pull --> Repo[EXTERNAL SKILL REPO]
+    Repo --> Registry[AGY SKILL REGISTRY]
+    Registry --> Orch[ORCHESTRATOR]
+    Orch --> Researcher[RESEARCHER]
+    Orch --> Architect[ARCHITECT]
+    Orch --> Implementer[IMPLEMENTER]
+    Orch --> Validator[VALIDATOR]
+    Orch --> Debugger[DEBUGGER]
+    Orch --> Reviewer[REVIEWER]
+    Researcher --> Flow[EXISTING AGY FLOW]
+    Architect --> Flow
+    Implementer --> Flow
+    Validator --> Flow
+    Debugger --> Flow
+    Reviewer --> Flow
+```
+
+**Key principle**: Pulled `SKILL.md` files are treated as **agent capabilities/instructions**, not a new orchestration framework. They inject into the existing engineering state machine.
 
 ## 🏗️ Architecture Overview
 
@@ -161,6 +200,15 @@ agy task "add rate limiting" --verbose --budget-tracking
 
 # Dry run (plan only, no implementation)
 agy task "migrate to TypeScript" --dry-run
+
+# Pull external skills from GitHub
+agy pull https://github.com/rmyndharis/antigravity-skills
+
+# List installed skills
+agy skill list
+
+# Remove a skill
+agy skill remove <skill-name>
 ```
 
 ---
@@ -172,8 +220,11 @@ agy-cli/
 ├── AGENTS.md                    # Project-wide mandatory rules
 ├── README.md                    # This file
 ├── .agyrc                       # Configuration (create from .agyrc.example)
+├── package.json                 # Node.js dependencies
+├── tsconfig.json                # TypeScript configuration
 ├── src/
 │   ├── agents/                  # Agent implementations
+│   │   ├── base.ts              # Base agent class
 │   │   ├── orchestrator.ts
 │   │   ├── researcher.ts
 │   │   ├── architect.ts
@@ -181,14 +232,34 @@ agy-cli/
 │   │   ├── debugger.ts
 │   │   ├── tester.ts
 │   │   └── reviewer.ts
-│   └── skills/                  # Skill definitions
-│       ├── engineering/
-│       ├── research/
-│       ├── architecture/
-│       ├── implementation/
-│       ├── debugging/
-│       ├── testing/
-│       └── review/
+│   ├── orchestrator/            # Orchestration engine
+│   │   ├── task-classifier.ts   # Mechanical task classification
+│   │   ├── agent-chain.ts       # Agent chains & gate verification
+│   │   ├── context-builder.ts   # Controlled context packages
+│   │   └── orchestrator.ts      # Main state machine loop
+│   ├── skills/                  # Skill system
+│   │   ├── registry.ts          # Skill registry & GitHub pull
+│   │   └── index.ts
+│   ├── config/                  # Configuration system
+│   │   └── index.ts             # Zod-validated config loader
+│   ├── tools/                   # Tool layer
+│   │   ├── registry.ts          # Tool registry with permissions
+│   │   ├── file-ops.ts          # File operations
+│   │   ├── shell.ts             # Shell command execution
+│   │   ├── search.ts            # Search operations
+│   │   └── types.ts             # Tool type definitions
+│   ├── state-machine/           # State machine components
+│   │   ├── phases.ts            # Phase definitions
+│   │   ├── gates.ts             # Gate verification
+│   │   ├── budget.ts            # Budget enforcement
+│   │   ├── ledger.ts            # Assumption/decision ledgers
+│   │   └── index.ts
+│   ├── types/                   # TypeScript type definitions
+│   │   └── index.ts
+│   ├── output/                  # Output formatting
+│   │   └── formatter.ts         # Rich terminal output
+│   ├── cli.ts                   # CLI entry point
+│   └── index.ts                 # Module exports
 └── .agents/                     # Agent & skill specs (Markdown)
     ├── agents/
     │   ├── orchestrator/
