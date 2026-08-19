@@ -1,10 +1,10 @@
 # AGY CLI — Antigravity Engineering Agent Framework
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/karth/agy-cli)
-[![GitHub Stars](https://img.shields.io/github/stars/karth/agy-cli?style=social)](https://github.com/karth/agy-cli/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/karth/agy-cli)](https://github.com/karth/agy-cli/issues)
-[![Last Commit](https://img.shields.io/github/last-commit/karth/agy-cli)](https://github.com/karth/agy-cli/commits/main)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/karthikeyanV2K/agy-cli)
+[![GitHub Stars](https://img.shields.io/github/stars/karthikeyanV2K/agy-cli?style=social)](https://github.com/karthikeyanV2K/agy-cli/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/karthikeyanV2K/agy-cli)](https://github.com/karthikeyanV2K/agy-cli/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/karthikeyanV2K/agy-cli)](https://github.com/karthikeyanV2K/agy-cli/commits/main)
 
 > **AGY CLI** is a production-grade, multi-agent orchestration framework that brings rigorous software engineering discipline to AI-assisted development. Built on a **Research → Plan → Implement → Verify → Review** pipeline with specialized agents, skills, and verification gates.
 
@@ -97,7 +97,7 @@ flowchart TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/karth/agy-cli.git
+git clone https://github.com/karthikeyanV2K/agy-cli.git
 cd agy-cli
 
 # Install dependencies (Node.js)
@@ -281,6 +281,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 # Fork and clone
 git clone https://github.com/YOUR_USERNAME/agy-cli.git
 cd agy-cli
+# Add upstream for syncing
+# git remote add upstream https://github.com/karthikeyanV2K/agy-cli.git
 
 # Create feature branch
 git checkout -b feature/amazing-feature
@@ -305,16 +307,16 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=karth/agy-cli&type=Date)](https://star-history.com/#karth/agy-cli&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=karthikeyanV2K/agy-cli&type=Date)](https://star-history.com/#karthikeyanV2K/agy-cli&Date)
 
 ---
 
 ## 🔗 Links
 
-- **GitHub Repository**: https://github.com/karth/agy-cli
-- **Issues & Bug Reports**: https://github.com/karth/agy-cli/issues
-- **Discussions**: https://github.com/karth/agy-cli/discussions
-- **Releases**: https://github.com/karth/agy-cli/releases
+- **GitHub Repository**: https://github.com/karthikeyanV2K/agy-cli
+- **Issues & Bug Reports**: https://github.com/karthikeyanV2K/agy-cli/issues
+- **Discussions**: https://github.com/karthikeyanV2K/agy-cli/discussions
+- **Releases**: https://github.com/karthikeyanV2K/agy-cli/releases
 
 ---
 
