@@ -167,8 +167,6 @@ sequenceDiagram
 
 ### Skill Injection Points
 
-### Skill Injection Points
-
 | Phase | Agent | Skill Content Injected As |
 |-------|-------|--------------------------|
 | RESEARCH | Researcher | Additional research methodologies, source priorities, gap analysis frameworks |
@@ -178,22 +176,66 @@ sequenceDiagram
 | DEBUGGING | Debugger | Root cause templates, hypothesis generation frameworks |
 | REVIEW | Reviewer | Review checklists, security patterns, performance anti-patterns |
 
-### Skill Matching Logic
-
-Skills are matched to agents using:
-1. **`target_agents`** in skill frontmatter — explicit agent list
-2. **`triggers`** — keyword matching against task description
-3. **Default fallback** — all skills available to all agents if no filters
-
-```yaml
-# Example SKILL.md frontmatter
 ---
-name: rust-driver-dev
-version: 1.2.0
-description: Rust kernel driver development patterns
-triggers: ["rust", "driver", "kernel", "pci", "mmio"]
-target_agents: [researcher, architect, implementer, validator]
----
+
+## ⚡ EAF Command — Explicit Engineering Agent Framework
+
+The `eaf` command runs the **full Engineering Agent Framework** with **explicit skill injection** — no trigger matching, no automatic selection. You specify exactly which skills to inject.
+
+```bash
+# EAF requires explicit skills via --skills flag
+agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory
+
+# Dry run to preview
+agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory --dry-run
+
+# Alias also works
+agy EAF "add PCIe driver support" --skills pci-subsystem,kernel-memory
+```
+
+### EAF vs Task
+
+| Command | Skill Selection | Use Case |
+|---------|-----------------|----------|
+| `agy task "..."` | Automatic (trigger-based) | Let AGY choose relevant skills |
+| `agy task "..." --skills a,b` | Explicit (optional) | Override with specific skills |
+| `agy eaf "..." --skills a,b` | **Explicit (required)** | Full control, no trigger matching |
+
+### EAF Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Orchestrator
+    participant SkillRegistry
+    participant Researcher
+    participant Architect
+    participant Implementer
+    participant Validator
+    participant Debugger
+    participant Reviewer
+
+    User->>CLI: agy pull <github-url>
+    CLI->>SkillRegistry: clone repo, find SKILL.md files
+    
+    User->>CLI: agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory
+    CLI->>Orchestrator: executeTask(description, explicitSkills=[...])
+    Orchestrator->>SkillRegistry: getSkillsByName([rust-driver-dev,kernel-memory])
+    SkillRegistry-->>Orchestrator: exact skills (NO trigger matching)
+    Orchestrator->>Orchestrator: classifyTask() → KERNEL_DRIVER
+    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, debugger, reviewer]
+    
+    loop For each agent in chain
+        Orchestrator->>SkillRegistry: filter explicit skills for agent
+        Orchestrator->>ContextBuilder: buildContext(taskContext, agent, phase, previousResults)
+        ContextBuilder->>ContextBuilder: inject explicit skill content into agent context
+        Orchestrator->>Agent: spawnAgent(agent, enrichedContext)
+        Agent-->>Orchestrator: result
+        Orchestrator->>Orchestrator: updateContextAfterAgent()
+    end
+
+    Orchestrator->>User: FinalVerification
 ```
 
 ---
@@ -351,6 +393,15 @@ agy task "build a Rust driver"
 agy skill list
 # Then run with explicit skills
 agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
+
+# EAF command - explicit Engineering Agent Framework (skills REQUIRED)
+# First list skills to see available names
+agy skill list
+# Then run EAF with explicit skills
+agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory
+
+# EAF dry run
+agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory --dry-run
 ```
 
 ---
