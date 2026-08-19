@@ -63,9 +63,80 @@ flowchart TD
 
 **Key principle**: Pulled `SKILL.md` files are treated as **agent capabilities/instructions**, not a new orchestration framework. They inject into the existing engineering state machine.
 
-## 🏗️ Architecture Overview
+---
+
+## 🔄 How Skills Work Inside AGY Conversation Flow
+
+When you run `agy task "..."`, here's how pulled skills automatically become part of the engineering flow:
 
 ```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Orchestrator
+    participant SkillRegistry
+    participant Researcher
+    participant Architect
+    participant Implementer
+    participant Validator
+    participant Debugger
+    participant Reviewer
+
+    User->>CLI: agy pull <github-url>
+    CLI->>SkillRegistry: clone repo, find SKILL.md files
+    SkillRegistry->>SkillRegistry: parse frontmatter, store in .agy/skills/
+    SkillRegistry->>Config: update .agyrc with skill config
+    
+    User->>CLI: agy task "build a Rust driver"
+    CLI->>Orchestrator: executeTask(description)
+    Orchestrator->>Orchestrator: classifyTask() → KERNEL_DRIVER
+    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, debugger, reviewer]
+    
+    loop For each agent in chain
+        Orchestrator->>SkillRegistry: getSkillsForAgent(agent)
+        SkillRegistry-->>Orchestrator: relevant skills (by triggers + targetAgents)
+        Orchestrator->>ContextBuilder: buildContext(taskContext, agent, phase, previousResults)
+        ContextBuilder->>ContextBuilder: inject skill content into agent context
+        Orchestrator->>Agent: spawnAgent(agent, enrichedContext)
+        Agent-->>Orchestrator: result
+        Orchestrator->>Orchestrator: updateContextAfterAgent()
+    end
+
+    Orchestrator->>User: FinalVerification
+```
+
+### Skill Injection Points
+
+| Phase | Agent | Skill Content Injected As |
+|-------|-------|--------------------------|
+| RESEARCH | Researcher | Additional research methodologies, source priorities, gap analysis frameworks |
+| ANALYSIS/PLANNING | Architect | Design patterns, architecture decision records, compatibility checklists |
+| IMPLEMENTATION | Implementer | Coding standards, anti-patterns, framework-specific guidelines |
+| VALIDATION | Validator | Test strategies, coverage targets, property-based testing approaches |
+| DEBUGGING | Debugger | Root cause templates, hypothesis generation frameworks |
+| REVIEW | Reviewer | Review checklists, security patterns, performance anti-patterns |
+
+### Skill Matching Logic
+
+Skills are matched to agents using:
+1. **`target_agents`** in skill frontmatter — explicit agent list
+2. **`triggers`** — keyword matching against task description
+3. **Default fallback** — all skills available to all agents if no filters
+
+```yaml
+# Example SKILL.md frontmatter
+---
+name: rust-driver-dev
+version: 1.2.0
+description: Rust kernel driver development patterns
+triggers: ["rust", "driver", "kernel", "pci", "mmio"]
+target_agents: [researcher, architect, implementer, validator]
+---
+```
+
+---
+
+## 🏗️ Architecture Overview
 flowchart TD
     User[USER TASK] --> Orch[ORCHESTRATOR]
     Orch --> Decompose[DECOMPOSE TASK]
@@ -279,6 +350,37 @@ agy-cli/
     │   └── review/
     └── policies/
 ```
+
+---
+
+## 🏛️ Core Implementation ("Caveman" Layer)
+
+The foundational AGY engineering flow — the **mechanical state machine, gate verification, budget enforcement, and agent orchestration** — lives in these core modules:
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| **State Machine Phases** | `src/state-machine/phases.ts` | 9-phase definitions: DISCOVERY → RESEARCH → ANALYSIS → PLANNING → IMPLEMENTATION → VALIDATION → DEBUGGING → REVIEW → COMPLETE |
+| **Gate Verification** | `src/state-machine/gates.ts` | Mechanical gate checks (no LLM calls) — repository inspected, requirements decomposed, architecture gate, build verification, test verification, regression check |
+| **Budget Enforcement** | `src/state-machine/budget.ts` | Research (3), Review (2), Debug (5), Total (10) — hard limits with rejection transitions |
+| **Assumption/Decision Ledgers** | `src/state-machine/ledger.ts` | Track CONFIRMED/VERIFIED/INFERRED/UNKNOWN knowledge states, architectural decisions with tradeoffs |
+| **Task Classification** | `src/orchestrator/task-classifier.ts` | Mechanical keyword/pattern matching for 11 task types (BUG, FEATURE_INTERNAL, FEATURE_EXTERNAL, REFACTOR, PERFORMANCE, SECURITY, ARCHITECTURE, KERNEL_DRIVER, BUILD_CI, TEST, DOCUMENTATION) |
+| **Agent Chains** | `src/orchestrator/agent-chain.ts` | Per-task-type agent chains per AGENTS.md spec, gate requirements per phase, rejection transitions |
+| **Context Builder** | `src/orchestrator/context-builder.ts` | Controlled context packages per agent (only relevant data per Context Package Protocol) |
+| **Main Orchestrator** | `src/orchestrator/orchestrator.ts` | State machine execution loop, budget checks, agent spawning, rejection handling |
+| **Base Agent** | `src/agents/base.ts` | Abstract base class with phase transitions, permission checks, result handling |
+| **Concrete Agents** | `src/agents/*.ts` | Researcher, Architect, Implementer, Validator, Debugger, Reviewer implementations |
+| **Skill Registry** | `src/skills/registry.ts` | GitHub pull, SKILL.md discovery, frontmatter parsing, agent skill injection |
+| **Tool Layer** | `src/tools/registry.ts` | Tool registration with permission enforcement (read/write/execute/network) |
+| **Config System** | `src/config/index.ts` | Zod-validated `.agyrc` loading, skill config persistence |
+| **Types** | `src/types/index.ts` | All TypeScript interfaces: TaskContext, ResearchResult, ArchitecturePlan, SkillConfig, etc. |
+
+### Key Characteristics of Core Layer
+
+- **Zero LLM calls in gates** — All verification is mechanical (boolean checks on TaskContext flags)
+- **No hardcoded assumptions** — Budgets, timeouts, agent chains all configurable via `.agyrc`
+- **Rejection transitions** — Failed gates automatically route back to earlier phases (PLANNING → RESEARCH, VALIDATION → DEBUGGING, REVIEW → IMPLEMENTATION)
+- **Budget as blocker** — Exhausted budget = BLOCKED state, not silent failure
+- **Context isolation** — Agents receive only relevant data via `buildContext()`
 
 ---
 
