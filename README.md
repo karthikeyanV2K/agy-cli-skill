@@ -13,14 +13,14 @@
 ## 🎉 New in v0.1.0: External Skill Integration
 
 ```bash
-# Pull skills from any GitHub repository
-agy pull https://github.com/rmyndharis/antigravity-skills
+# Pull skills from any GitHub repository (any tech stack)
+agy pull https://github.com/your-org/your-skills-repo
 
-# Option 1: Automatic (trigger-based) - skills match by keywords in task
-agy task "build a Rust driver"
+# Option 1: Automatic (trigger-based) - skills match by keywords in your task
+agy task "implement user authentication with JWT"
 
-# Option 2: Explicit - bypass trigger matching, use specific skills
-agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
+# Option 2: Explicit - bypass trigger matching, use specific skills by name
+agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
 ```
 
 Pulled skills become part of AGY's existing agent flow — **no separate skill system**. The skills are injected as agent capabilities/instructions into Researcher, Architect, Implementer, Validator, Debugger, and Reviewer contexts.
@@ -33,11 +33,11 @@ Pulled skills become part of AGY's existing agent flow — **no separate skill s
 | **Explicit (`--skills`)** | You specify exact skill names, bypasses trigger matching | You know exactly which skills you want |
 
 ```bash
-# Automatic - AGY matches skills by triggers in "rust driver kernel"
-agy task "build a Rust driver"
+# Automatic - AGY matches skills by triggers in your task description
+agy task "implement user authentication with JWT"
 
 # Explicit - you control exactly which skills are injected
-agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
+agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
 
 # List available skills to choose from
 agy skill list
@@ -110,10 +110,10 @@ sequenceDiagram
     SkillRegistry->>SkillRegistry: parse frontmatter, store in .agy/skills/
     SkillRegistry->>Config: update .agyrc with skill config
     
-    User->>CLI: agy task "build a Rust driver"
+    User->>CLI: agy task "implement user authentication with JWT"
     CLI->>Orchestrator: executeTask(description)
-    Orchestrator->>Orchestrator: classifyTask() → KERNEL_DRIVER
-    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, debugger, reviewer]
+    Orchestrator->>Orchestrator: classifyTask() → FEATURE_INTERNAL
+    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, reviewer]
     
     loop For each agent in chain
         Orchestrator->>SkillRegistry: getSkillsForAgent(agent)
@@ -146,12 +146,12 @@ sequenceDiagram
     User->>CLI: agy pull <github-url>
     CLI->>SkillRegistry: clone repo, find SKILL.md files
     
-    User->>CLI: agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
-    CLI->>Orchestrator: executeTask(description, explicitSkills=[rust-driver-dev,kernel-memory])
-    Orchestrator->>SkillRegistry: getSkillsByName([rust-driver-dev,kernel-memory])
+    User->>CLI: agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
+    CLI->>Orchestrator: executeTask(description, explicitSkills=[jwt-auth,security-best-practices])
+    Orchestrator->>SkillRegistry: getSkillsByName([jwt-auth,security-best-practices])
     SkillRegistry-->>Orchestrator: exact skills (bypassing trigger matching)
-    Orchestrator->>Orchestrator: classifyTask() → KERNEL_DRIVER
-    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, debugger, reviewer]
+    Orchestrator->>Orchestrator: classifyTask() → FEATURE_INTERNAL
+    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, reviewer]
     
     loop For each agent in chain
         Orchestrator->>SkillRegistry: filter explicit skills for agent
@@ -184,13 +184,13 @@ The `eaf` command runs the **full Engineering Agent Framework** with **explicit 
 
 ```bash
 # EAF requires explicit skills via --skills flag
-agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory
+agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices
 
 # Dry run to preview
-agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory --dry-run
+agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices --dry-run
 
 # Alias also works
-agy EAF "add PCIe driver support" --skills pci-subsystem,kernel-memory
+agy EAF "add rate limiting to API" --skills rate-limiting,api-design-patterns
 ```
 
 ### EAF vs Task
@@ -219,12 +219,12 @@ sequenceDiagram
     User->>CLI: agy pull <github-url>
     CLI->>SkillRegistry: clone repo, find SKILL.md files
     
-    User->>CLI: agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory
+    User->>CLI: agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices
     CLI->>Orchestrator: executeTask(description, explicitSkills=[...])
-    Orchestrator->>SkillRegistry: getSkillsByName([rust-driver-dev,kernel-memory])
+    Orchestrator->>SkillRegistry: getSkillsByName([jwt-auth,security-best-practices])
     SkillRegistry-->>Orchestrator: exact skills (NO trigger matching)
-    Orchestrator->>Orchestrator: classifyTask() → KERNEL_DRIVER
-    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, debugger, reviewer]
+    Orchestrator->>Orchestrator: classifyTask() → FEATURE_INTERNAL
+    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, reviewer]
     
     loop For each agent in chain
         Orchestrator->>SkillRegistry: filter explicit skills for agent
@@ -371,13 +371,13 @@ agy task "implement user authentication with JWT"
 agy task "refactor database layer" --agents researcher,architect,implementer,tester,reviewer
 
 # Verbose output with budget tracking
-agy task "add rate limiting" --verbose --budget-tracking
+agy task "add rate limiting to API" --verbose --budget-tracking
 
 # Dry run (plan only, no implementation)
 agy task "migrate to TypeScript" --dry-run
 
-# Pull external skills from GitHub
-agy pull https://github.com/rmyndharis/antigravity-skills
+# Pull external skills from GitHub (any tech stack)
+agy pull https://github.com/your-org/your-skills-repo
 
 # List installed skills
 agy skill list
@@ -386,22 +386,22 @@ agy skill list
 agy skill remove <skill-name>
 
 # Automatic skill matching (trigger-based)
-agy task "build a Rust driver"
+agy task "implement user authentication with JWT"
 
 # Explicit skills (bypass trigger matching)
 # First list skills to see available names
 agy skill list
 # Then run with explicit skills
-agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
+agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
 
 # EAF command - explicit Engineering Agent Framework (skills REQUIRED)
 # First list skills to see available names
 agy skill list
 # Then run EAF with explicit skills
-agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory
+agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices
 
 # EAF dry run
-agy eaf "build a Rust driver" --skills rust-driver-dev,kernel-memory --dry-run
+agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices --dry-run
 ```
 
 ---
