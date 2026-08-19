@@ -16,11 +16,32 @@
 # Pull skills from any GitHub repository
 agy pull https://github.com/rmyndharis/antigravity-skills
 
-# Skills automatically inject into AGY engineering flow
+# Option 1: Automatic (trigger-based) - skills match by keywords in task
 agy task "build a Rust driver"
+
+# Option 2: Explicit - bypass trigger matching, use specific skills
+agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
 ```
 
 Pulled skills become part of AGY's existing agent flow — **no separate skill system**. The skills are injected as agent capabilities/instructions into Researcher, Architect, Implementer, Validator, Debugger, and Reviewer contexts.
+
+### Two Ways to Use Skills
+
+| Mode | How It Works | Use When |
+|------|--------------|----------|
+| **Automatic (trigger-based)** | Skills matched by `triggers` keywords in task description | You want AGY to auto-select relevant skills |
+| **Explicit (`--skills`)** | You specify exact skill names, bypasses trigger matching | You know exactly which skills you want |
+
+```bash
+# Automatic - AGY matches skills by triggers in "rust driver kernel"
+agy task "build a Rust driver"
+
+# Explicit - you control exactly which skills are injected
+agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
+
+# List available skills to choose from
+agy skill list
+```
 
 ---
 
@@ -67,7 +88,9 @@ flowchart TD
 
 ## 🔄 How Skills Work Inside AGY Conversation Flow
 
-When you run `agy task "..."`, here's how pulled skills automatically become part of the engineering flow:
+When you run `agy task "..."`, here's how pulled skills become part of the engineering flow — **two modes**:
+
+### Mode 1: Automatic (Trigger-Based)
 
 ```mermaid
 sequenceDiagram
@@ -104,6 +127,45 @@ sequenceDiagram
 
     Orchestrator->>User: FinalVerification
 ```
+
+### Mode 2: Explicit (`--skills` flag)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Orchestrator
+    participant SkillRegistry
+    participant Researcher
+    participant Architect
+    participant Implementer
+    participant Validator
+    participant Debugger
+    participant Reviewer
+
+    User->>CLI: agy pull <github-url>
+    CLI->>SkillRegistry: clone repo, find SKILL.md files
+    
+    User->>CLI: agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
+    CLI->>Orchestrator: executeTask(description, explicitSkills=[rust-driver-dev,kernel-memory])
+    Orchestrator->>SkillRegistry: getSkillsByName([rust-driver-dev,kernel-memory])
+    SkillRegistry-->>Orchestrator: exact skills (bypassing trigger matching)
+    Orchestrator->>Orchestrator: classifyTask() → KERNEL_DRIVER
+    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, debugger, reviewer]
+    
+    loop For each agent in chain
+        Orchestrator->>SkillRegistry: filter explicit skills for agent
+        Orchestrator->>ContextBuilder: buildContext(taskContext, agent, phase, previousResults)
+        ContextBuilder->>ContextBuilder: inject explicit skill content into agent context
+        Orchestrator->>Agent: spawnAgent(agent, enrichedContext)
+        Agent-->>Orchestrator: result
+        Orchestrator->>Orchestrator: updateContextAfterAgent()
+    end
+
+    Orchestrator->>User: FinalVerification
+```
+
+### Skill Injection Points
 
 ### Skill Injection Points
 
@@ -280,6 +342,15 @@ agy skill list
 
 # Remove a skill
 agy skill remove <skill-name>
+
+# Automatic skill matching (trigger-based)
+agy task "build a Rust driver"
+
+# Explicit skills (bypass trigger matching)
+# First list skills to see available names
+agy skill list
+# Then run with explicit skills
+agy task "build a Rust driver" --skills rust-driver-dev,kernel-memory
 ```
 
 ---

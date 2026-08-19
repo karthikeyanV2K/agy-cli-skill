@@ -142,10 +142,16 @@ async function runTaskCommand(description: string, options: any): Promise<void> 
   try {
     formatter.banner('AGY Task Execution', `Task: ${description.substring(0, 50)}${description.length > 50 ? '...' : ''}`);
     
+    // Parse explicit skills if provided
+    const explicitSkills = options.skills ? options.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    
     if (options.dryRun) {
       formatter.dryRun(`Would execute task: ${description}`);
       formatter.dryRun(`Budget tracking: ${options.budgetTracking ? 'enabled' : 'disabled'}`);
       formatter.dryRun(`Agents: ${options.agents || 'default'}`);
+      if (explicitSkills.length > 0) {
+        formatter.dryRun(`Explicit skills: ${explicitSkills.join(', ')} (bypassing trigger matching)`);
+      }
       return;
     }
 
@@ -155,6 +161,21 @@ async function runTaskCommand(description: string, options: any): Promise<void> 
     formatter.info(`Loaded configuration from ${options.config || 'default'}`);
     formatter.info(`Task type: ${options.type || 'feature'}`);
     formatter.info(`Max concurrent agents: ${config.orchestrator.maxConcurrentTasks}`);
+    
+    if (explicitSkills.length > 0) {
+      formatter.info(`Explicit skills: ${explicitSkills.join(', ')}`);
+      // Load skill registry to show what would be injected
+      const { createSkillRegistry } = await import('./skills/index.js');
+      const registry = createSkillRegistry(config);
+      for (const skillName of explicitSkills) {
+        const skills = registry.getSkills().filter(s => s.name === skillName);
+        if (skills.length > 0) {
+          formatter.info(`  → ${skills[0].name} v${skills[0].version}: ${skills[0].description}`);
+        } else {
+          formatter.warning(`  → Skill not found: ${skillName}`);
+        }
+      }
+    }
     
     // Show task summary
     formatter.taskSummary('task-' + Date.now(), description, 'DISCOVERY', createMockBudget());
@@ -439,6 +460,7 @@ function main(): void {
     .option('--agents <agents>', 'Comma-separated list of agents to use', 'default')
     .option('--config <path>', 'Path to config file')
     .option('--type <type>', 'Task type (feature|bugfix|refactor|research|documentation|test)', 'feature')
+    .option('--skills <skills>', 'Comma-separated list of skills to use (bypasses trigger matching)', '')
     .action(runTaskCommand);
 
   // Config command
