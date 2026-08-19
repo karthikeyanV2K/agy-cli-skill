@@ -1,0 +1,32 @@
+{
+  "name": "agy-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "agy": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli.ts",
+    "test": "vitest"
+  },
+"dependencies": {
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.0",
+    "zod": "^3.23.8",
+    "chalk": "^5.3.0",
+    "ora": "^8.1.0",
+    "glob": "^11.0.0",
+    "fast-glob": "^3.3.2",
+    "uuid": "^10.0.0"
+  },
+"devDependencies": {
+    "typescript": "^5.6.2",
+    "@types/node": "^22.7.4",
+    "@types/js-yaml": "^4.0.9",
+    "vitest": "^2.1.1",
+    "tsx": "^4.19.1",
+    "@types/uuid": "^10.0.0"
+  }
+}
