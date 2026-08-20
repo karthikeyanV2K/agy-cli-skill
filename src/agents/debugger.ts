@@ -481,9 +481,11 @@ describe('Reproduction: ${failure.name}', () => {
 }
 
 /**
- * Factory function to create DebuggerAgent with default config
+ * Factory function to create DebuggerAgent with config
+ * @param toolRegistry - Tool registry for the agent
+ * @param model - Optional model override from config (any Oz-compatible model ID)
  */
-export function createDebuggerAgent(toolRegistry: ToolRegistry): DebuggerAgent {
+export function createDebuggerAgent(toolRegistry: ToolRegistry, model?: string): DebuggerAgent {
   const config: AgentConfig = {
     type: 'debugger',
     name: 'debugger',
@@ -494,7 +496,7 @@ export function createDebuggerAgent(toolRegistry: ToolRegistry): DebuggerAgent {
       network: [],
       budget: { research: 0, review: 0, debug: 5, total: 5 },
     },
-    model: 'claude-4-5-sonnet',
+    model: model ?? 'claude-4-5-sonnet',
   };
   return new DebuggerAgent(config, toolRegistry);
 }

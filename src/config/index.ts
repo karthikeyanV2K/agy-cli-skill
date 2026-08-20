@@ -46,6 +46,7 @@ const OrchestratorConfigSchema = z.object({
   defaultBudget: BudgetConfigSchema,
   maxConcurrentTasks: z.number().int().positive().default(3),
   gateTimeouts: z.record(z.number().int().positive()).default({}),
+  model: z.string().optional(),
 });
 
 const SkillConfigSchema = z.object({
@@ -208,5 +209,5 @@ export function getDefaultConfig(): Config {
 export function saveConfig(config: Config, outputPath?: string): void {
   const path = outputPath ?? join(process.cwd(), '.agyrc');
   const yamlStr = yaml.dump(config, { indent: 2, lineWidth: 120 });
-  require('node:fs').writeFileSync(path, yamlStr, 'utf-8');
+  import('node:fs').then(fs => fs.writeFileSync(path, yamlStr, 'utf-8'));
 }

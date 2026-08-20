@@ -431,9 +431,11 @@ export class TesterAgent extends Agent {
 }
 
 /**
- * Factory function to create TesterAgent with default config
+ * Factory function to create TesterAgent with config
+ * @param toolRegistry - Tool registry for the agent
+ * @param model - Optional model override from config (any Oz-compatible model ID)
  */
-export function createTesterAgent(toolRegistry: ToolRegistry): TesterAgent {
+export function createTesterAgent(toolRegistry: ToolRegistry, model?: string): TesterAgent {
   const config: AgentConfig = {
     type: 'validator',
     name: 'tester',
@@ -444,7 +446,7 @@ export function createTesterAgent(toolRegistry: ToolRegistry): TesterAgent {
       network: [],
       budget: { research: 0, review: 1, debug: 1, total: 2 },
     },
-    model: 'claude-4-5-sonnet',
+    model: model ?? 'claude-4-5-sonnet',
   };
   return new TesterAgent(config, toolRegistry);
 }

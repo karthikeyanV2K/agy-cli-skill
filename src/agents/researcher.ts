@@ -380,9 +380,11 @@ export class ResearcherAgent extends Agent {
 }
 
 /**
- * Factory function to create ResearcherAgent with default config
+ * Factory function to create ResearcherAgent with config
+ * @param toolRegistry - Tool registry for the agent
+ * @param model - Optional model override from config (any Oz-compatible model ID)
  */
-export function createResearcherAgent(toolRegistry: ToolRegistry): ResearcherAgent {
+export function createResearcherAgent(toolRegistry: ToolRegistry, model?: string): ResearcherAgent {
   const config: AgentConfig = {
     type: 'researcher',
     name: 'researcher',
@@ -393,7 +395,7 @@ export function createResearcherAgent(toolRegistry: ToolRegistry): ResearcherAge
       network: ['*'],
       budget: { research: 3, review: 0, debug: 0, total: 3 },
     },
-    model: 'claude-4-5-sonnet',
+    model: model ?? 'claude-4-5-sonnet',
   };
   return new ResearcherAgent(config, toolRegistry);
 }

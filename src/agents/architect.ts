@@ -543,9 +543,11 @@ export class ArchitectAgent extends Agent {
 }
 
 /**
- * Factory function to create ArchitectAgent with default config
+ * Factory function to create ArchitectAgent with config
+ * @param toolRegistry - Tool registry for the agent
+ * @param model - Optional model override from config (any Oz-compatible model ID)
  */
-export function createArchitectAgent(toolRegistry: ToolRegistry): ArchitectAgent {
+export function createArchitectAgent(toolRegistry: ToolRegistry, model?: string): ArchitectAgent {
   const config: AgentConfig = {
     type: 'architect',
     name: 'architect',
@@ -556,7 +558,7 @@ export function createArchitectAgent(toolRegistry: ToolRegistry): ArchitectAgent
       network: [],
       budget: { research: 1, review: 1, debug: 1, total: 3 },
     },
-    model: 'claude-4-5-sonnet',
+    model: model ?? 'claude-4-5-sonnet',
   };
   return new ArchitectAgent(config, toolRegistry);
 }

@@ -3,7 +3,9 @@
 
 orchestrator:
   # Model to use for orchestration (supports any Oz-compatible model)
-  model: "claude-4-5-sonnet"
+  # Available Gemini models: gemini-2.5-flash-lite, gemini-3-flash, gemini-3.1-pro,
+  # gemini-3.5-flash, gemini-3.6-flash, gemini-3.7-flash
+  model: "gemini-3.5-flash"
   # Maximum concurrent child agents
   max_concurrent_agents: 4
   # Research budget - prevents infinite research loops
@@ -20,21 +22,27 @@ orchestrator:
 agents:
   researcher:
     permissions: [read, search, execute]
+    # model: "gemini-3.7-flash"        # Override model per-agent (optional)
     description: "Investigates knowledge gaps, queries authoritative sources"
   architect:
     permissions: [read, search, plan]
+    # model: "gemini-3.1-pro"           # Override model per-agent (optional)
     description: "Designs architecture, creates implementation plans"
   implementer:
     permissions: [read, write, execute]
+    # model: "gemini-3.5-flash"         # Override model per-agent (optional)
     description: "Writes code, executes builds and tests"
   tester:
     permissions: [read, write:tests, execute]
+    # model: "gemini-2.5-flash-lite"    # Override model per-agent (optional)
     description: "Runs validation suite, writes test cases"
   reviewer:
     permissions: [read, search, execute, reject]
+    # model: "gemini-3.6-flash"         # Override model per-agent (optional)
     description: "Adversarial review, can REJECT implementation"
   debugger:
     permissions: [read, write, execute]
+    # model: "gemini-3.7-flash"         # Override model per-agent (optional)
     description: "Root cause analysis, applies fixes"
 
 # Enabled skills (all enabled by default)

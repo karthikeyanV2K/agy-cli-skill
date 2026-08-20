@@ -1015,9 +1015,11 @@ export class ReviewerAgent extends Agent {
 }
 
 /**
- * Factory function to create ReviewerAgent with default config
+ * Factory function to create ReviewerAgent with config
+ * @param toolRegistry - Tool registry for the agent
+ * @param model - Optional model override from config (any Oz-compatible model ID)
  */
-export function createReviewerAgent(toolRegistry: ToolRegistry): ReviewerAgent {
+export function createReviewerAgent(toolRegistry: ToolRegistry, model?: string): ReviewerAgent {
   const config: AgentConfig = {
     type: 'reviewer',
     name: 'reviewer',
@@ -1028,7 +1030,7 @@ export function createReviewerAgent(toolRegistry: ToolRegistry): ReviewerAgent {
       network: [],
       budget: { research: 0, review: 2, debug: 0, total: 2 },
     },
-    model: 'claude-4-5-sonnet',
+    model: model ?? 'claude-4-5-sonnet',
   };
   return new ReviewerAgent(config, toolRegistry);
 }

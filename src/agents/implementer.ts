@@ -410,9 +410,11 @@ export class ImplementerAgent extends Agent {
 }
 
 /**
- * Factory function to create ImplementerAgent with default config
+ * Factory function to create ImplementerAgent with config
+ * @param toolRegistry - Tool registry for the agent
+ * @param model - Optional model override from config (any Oz-compatible model ID)
  */
-export function createImplementerAgent(toolRegistry: ToolRegistry): ImplementerAgent {
+export function createImplementerAgent(toolRegistry: ToolRegistry, model?: string): ImplementerAgent {
   const config: AgentConfig = {
     type: 'implementer',
     name: 'implementer',
@@ -423,7 +425,7 @@ export function createImplementerAgent(toolRegistry: ToolRegistry): ImplementerA
       network: [],
       budget: { research: 0, review: 1, debug: 3, total: 4 },
     },
-    model: 'claude-4-5-sonnet',
+    model: model ?? 'claude-4-5-sonnet',
   };
   return new ImplementerAgent(config, toolRegistry);
 }
