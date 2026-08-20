@@ -72,15 +72,15 @@ export class SkillRegistry {
 
       if (frontmatterMatch) {
         const fm = frontmatterMatch[1];
-        const nameMatch = fm.match(/name:\s*['"]?([^'"]+)['"]?/);
-        const versionMatch = fm.match(/version:\s*['"]?([^'"]+)['"]?/);
-        const descMatch = fm.match(/description:\s*['"]?([^'"]+)['"]?/);
-        const triggersMatch = fm.match(/triggers:\s*\[([^\]]+)\]/);
-        const agentsMatch = fm.match(/target_agents:\s*\[([^\]]+)\]/);
+        const nameMatch = fm.match(/^name:\s*(?:['"]([^'"]+)['"]|([^\r\n]+))/m);
+        const versionMatch = fm.match(/^version:\s*(?:['"]([^'"]+)['"]|([^\r\n]+))/m);
+        const descMatch = fm.match(/^description:\s*(?:['"]([^'"]+)['"]|([^\r\n]+))/m);
+        const triggersMatch = fm.match(/^triggers:\s*\[([^\]]+)\]/m);
+        const agentsMatch = fm.match(/^target_agents:\s*\[([^\]]+)\]/m);
 
-        if (nameMatch) name = nameMatch[1].trim();
-        if (versionMatch) version = versionMatch[1].trim();
-        if (descMatch) description = descMatch[1].trim();
+        if (nameMatch) name = (nameMatch[1] || nameMatch[2]).trim().replace(/^['"]|['"]$/g, '');
+        if (versionMatch) version = (versionMatch[1] || versionMatch[2]).trim().replace(/^['"]|['"]$/g, '');
+        if (descMatch) description = (descMatch[1] || descMatch[2]).trim().replace(/^['"]|['"]$/g, '');
         if (triggersMatch) {
           triggers = triggersMatch[1].split(',').map(t => t.trim().replace(/['"]/g, ''));
         }
