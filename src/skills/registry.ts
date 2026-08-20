@@ -248,7 +248,7 @@ export class SkillRegistry {
             if (!['.git', 'node_modules', '.github', 'dist', 'build'].includes(entry.name)) {
               walk(fullPath);
             }
-          } else if (entry.isFile() && entry.name.toUpperCase() === 'SKILL.md') {
+          } else if (entry.isFile() && entry.name.toLowerCase() === 'skill.md') {
             skills.push(fullPath);
           }
         }
