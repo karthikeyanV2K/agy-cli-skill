@@ -13,14 +13,14 @@
 ## 🎉 New in v0.1.0: External Skill Integration
 
 ```bash
-# Pull skills from any GitHub repository (any tech stack)
-agy pull https://github.com/your-org/your-skills-repo
+# Pull skills from the official AGY skills repository
+agy pull https://github.com/karthikeyanV2K/agy-cli-skill
 
 # Option 1: Automatic (trigger-based) - skills match by keywords in your task
 agy task "implement user authentication with JWT"
 
 # Option 2: Explicit - bypass trigger matching, use specific skills by name
-agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
+agy task "implement user authentication with JWT" --skills engineering,implementation,testing,review
 ```
 
 Pulled skills become part of AGY's existing agent flow — **no separate skill system**. The skills are injected as agent capabilities/instructions into Researcher, Architect, Implementer, Validator, Debugger, and Reviewer contexts.
@@ -323,12 +323,15 @@ pip install -r requirements.txt
 
 ### Configuration
 
-Create a `.agyrc` configuration file:
+Create a `.agyrc` configuration file (copy from `.agyrc.example`):
 
 ```yaml
 # .agyrc
 orchestrator:
-  model: "claude-4-5-sonnet"
+  # Supports any Oz-compatible model (Gemini, Claude, GPT, etc.)
+  # Available Gemini: gemini-2.5-flash-lite, gemini-3-flash, gemini-3.1-pro,
+  # gemini-3.5-flash, gemini-3.6-flash, gemini-3.7-flash
+  model: "gemini-3.5-flash"
   max_concurrent_agents: 4
   research_budget:
     max_rounds: 3
@@ -340,6 +343,7 @@ orchestrator:
 agents:
   researcher:
     permissions: [read, search, execute]
+    # model: "gemini-3.7-flash"  # Per-agent override (optional)
   architect:
     permissions: [read, search, plan]
   implementer:
@@ -376,8 +380,8 @@ agy task "add rate limiting to API" --verbose --budget-tracking
 # Dry run (plan only, no implementation)
 agy task "migrate to TypeScript" --dry-run
 
-# Pull external skills from GitHub (any tech stack)
-agy pull https://github.com/your-org/your-skills-repo
+# Pull external skills from the official AGY skills repository
+agy pull https://github.com/karthikeyanV2K/agy-cli-skill
 
 # List installed skills
 agy skill list
@@ -391,17 +395,17 @@ agy task "implement user authentication with JWT"
 # Explicit skills (bypass trigger matching)
 # First list skills to see available names
 agy skill list
-# Then run with explicit skills
-agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
+# Then run with explicit skills (using built-in skill names)
+agy task "implement user authentication with JWT" --skills engineering,implementation,testing,review
 
 # EAF command - explicit Engineering Agent Framework (skills REQUIRED)
 # First list skills to see available names
 agy skill list
 # Then run EAF with explicit skills
-agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices
+agy eaf "implement user authentication with JWT" --skills engineering,implementation,testing,review
 
 # EAF dry run
-agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices --dry-run
+agy eaf "implement user authentication with JWT" --skills engineering,implementation,testing,review --dry-run
 ```
 
 ---
