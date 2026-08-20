@@ -36,8 +36,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Traces and execution data
-.agy/traces/
-.agy/cache/
+.agy/
+.gemini/
 
 # Test outputs
 coverage/
