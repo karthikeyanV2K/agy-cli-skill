@@ -24,6 +24,12 @@ if command -v npm >/dev/null 2>&1; then
     npm --prefix "$SKILL_DIR" run build --silent
 fi
 
+EAF_SKILL_DIR="$HOME/.gemini/config/skills/eaf"
+mkdir -p "$EAF_SKILL_DIR" ".agents/skills/eaf" ".gemini/skills/eaf"
+cp -f "$SKILL_DIR/SKILL.md" "$EAF_SKILL_DIR/SKILL.md"
+cp -f "$SKILL_DIR/SKILL.md" ".agents/skills/eaf/SKILL.md"
+cp -f "$SKILL_DIR/SKILL.md" ".gemini/skills/eaf/SKILL.md"
+
 cat << "EOF" > "$RULE_DIR/eaf-orchestrator.md"
 # EAF Orchestrator Protocol Rule
 

@@ -22,6 +22,12 @@ if (Get-Command npm -ErrorAction SilentlyContinue) {
     npm --prefix $skillDir run build --silent
 }
 
+$eafSkillDir = "$HOME\.gemini\config\skills\eaf"
+New-Item -ItemType Directory -Force -Path $eafSkillDir, ".agents\skills\eaf", ".gemini\skills\eaf" | Out-Null
+Copy-Item -Force "$skillDir\SKILL.md" "$eafSkillDir\SKILL.md"
+Copy-Item -Force "$skillDir\SKILL.md" ".agents\skills\eaf\SKILL.md"
+Copy-Item -Force "$skillDir\SKILL.md" ".gemini\skills\eaf\SKILL.md"
+
 $ruleContent = @'
 # EAF Orchestrator Protocol Rule
 

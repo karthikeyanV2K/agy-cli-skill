@@ -1,8 +1,8 @@
 ---
-name: engineering
+name: eaf
 version: "1.0.0"
 description: "Master engineering rules: DISCOVER→RESEARCH→REASON→PLAN→IMPLEMENT→VERIFY→REVIEW"
-triggers: ["engineering", "workflow", "process", "methodology"]
+triggers: ["eaf", "EAF", "engineering", "workflow", "process", "methodology", "orchestrator"]
 target_agents: ["orchestrator", "researcher", "architect", "implementer", "validator", "debugger", "reviewer"]
 ---
 
