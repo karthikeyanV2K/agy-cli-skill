@@ -18,6 +18,12 @@ else
     git clone https://github.com/karthikeyanV2K/agy-cli-skill.git "$SKILL_DIR"
 fi
 
+if command -v npm >/dev/null 2>&1; then
+    echo -e "\033[0;33mBuilding agy-cli-skill TypeScript engine...\033[0m"
+    npm --prefix "$SKILL_DIR" install --silent
+    npm --prefix "$SKILL_DIR" run build --silent
+fi
+
 cat << "EOF" > "$RULE_DIR/eaf-orchestrator.md"
 # EAF Orchestrator Protocol Rule
 

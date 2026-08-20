@@ -16,6 +16,12 @@ if (Test-Path "$skillDir\.git") {
     git clone https://github.com/karthikeyanV2K/agy-cli-skill.git $skillDir
 }
 
+if (Get-Command npm -ErrorAction SilentlyContinue) {
+    Write-Host "Building agy-cli-skill TypeScript engine..." -ForegroundColor Yellow
+    npm --prefix $skillDir install --silent
+    npm --prefix $skillDir run build --silent
+}
+
 $ruleContent = @'
 # EAF Orchestrator Protocol Rule
 
