@@ -1,636 +1,165 @@
-# AGY CLI — Antigravity Engineering Agent Framework
+# ⚡ AGY CLI Skill & EAF Orchestrator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/karthikeyanV2K/agy-cli)
-[![GitHub Stars](https://img.shields.io/github/stars/karthikeyanV2K/agy-cli?style=social)](https://github.com/karthikeyanV2K/agy-cli/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/karthikeyanV2K/agy-cli)](https://github.com/karthikeyanV2K/agy-cli/issues)
-[![Last Commit](https://img.shields.io/github/last-commit/karthikeyanV2K/agy-cli)](https://github.com/karthikeyanV2K/agy-cli/commits/main)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![AGY CLI Compatible](https://img.shields.io/badge/Antigravity-Compatible-4285F4?logo=google)](https://github.com/karthikeyanV2K/agy-cli-skill)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#-1-click-installation-all-os)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **AGY CLI** is a production-grade, multi-agent orchestration framework that brings rigorous software engineering discipline to AI-assisted development. Built on a **DISCOVER → RESEARCH → ANALYSIS → PLANNING → IMPLEMENTATION → VALIDATION → DEBUGGING → REVIEW → COMPLETE** pipeline with specialized agents, external skill support, mechanical gate verification, and configurable budgets.
+An enterprise-grade autonomous orchestration skill for **Google Antigravity (AGY CLI)**. Equips your coding assistant with the **Enterprise Agent Framework (EAF)**, enforcing 10 Core Engineering Laws, strict permission boundaries, and structured multi-agent state machine execution via the `/EAF <Prompt>` command.
 
-## 🎉 New in v0.1.0: External Skill Integration
+---
 
-```bash
-# Pull skills from the official AGY skills repository
-agy pull https://github.com/karthikeyanV2K/agy-cli-skill
+## 🚀 1-Click Installation (All OS)
 
-# Option 1: Automatic (trigger-based) - skills match by keywords in your task
-agy task "implement user authentication with JWT"
+Choose your operating system to automatically install the skill and configure the `/EAF` command:
 
-# Option 2: Explicit - bypass trigger matching, use specific skills by name
-agy task "implement user authentication with JWT" --skills engineering,implementation,testing,review
+### 🪟 Windows (PowerShell)
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/karthikeyanV2K/agy-cli-skill/main/install.ps1 | iex"
 ```
 
-Pulled skills become part of AGY's existing agent flow — **no separate skill system**. The skills are injected as agent capabilities/instructions into Researcher, Architect, Implementer, Validator, Debugger, and Reviewer contexts.
+*Or direct inline execution:*
+```powershell
+& { $s="$HOME\.gemini\config\skills\agy-cli-skill"; $r="$HOME\.gemini\config\rules"; New-Item -ItemType Directory -Force -Path $s,$r,".gemini\skills",".gemini\rules"|Out-Null; if(Test-Path "$s\.git"){git -C $s pull}else{git clone https://github.com/karthikeyanV2K/agy-cli-skill.git $s}; @'
+# EAF Orchestrator Protocol Rule
+When the user starts a request with `/EAF`, activate the Enterprise Agent Framework (EAF) Orchestrator Mode.
+1. Classify task (BUG, FEATURE, REFACTOR, PERFORMANCE, SECURITY, ARCHITECTURE).
+2. Execute state machine: DISCOVERY -> RESEARCH -> ANALYSIS -> PLANNING -> IMPLEMENTATION -> VALIDATION -> REVIEW -> COMPLETE.
+3. Enforce AGENTS.md Engineering Laws 1-10 (Never blindly code, Knowledge states, Decision Ledger, Adversarial Review).
+'@ | Out-File -Encoding utf8 "$r\eaf-orchestrator.md"; Copy-Item -Force "$r\eaf-orchestrator.md" ".gemini\rules\eaf-orchestrator.md"; Write-Host "`n Setup Complete! Use: /EAF <Prompt>" -ForegroundColor Green }
+```
 
-### Two Ways to Use Skills
-
-| Mode | How It Works | Use When |
-|------|--------------|----------|
-| **Automatic (trigger-based)** | Skills matched by `triggers` keywords in task description | You want AGY to auto-select relevant skills |
-| **Explicit (`--skills`)** | You specify exact skill names, bypasses trigger matching | You know exactly which skills you want |
-
+### 🐧 Linux & 🍎 macOS (Bash / Zsh)
 ```bash
-# Automatic - AGY matches skills by triggers in your task description
-agy task "implement user authentication with JWT"
+curl -fsSL https://raw.githubusercontent.com/karthikeyanV2K/agy-cli-skill/main/install.sh | bash
+```
 
-# Explicit - you control exactly which skills are injected
-agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
-
-# List available skills to choose from
-agy skill list
+*Or direct inline execution:*
+```bash
+bash -c 'SKILL_DIR="$HOME/.gemini/config/skills/agy-cli-skill"; RULE_DIR="$HOME/.gemini/config/rules"; mkdir -p "$SKILL_DIR" "$RULE_DIR" .gemini/skills .gemini/rules; if [ -d "$SKILL_DIR/.git" ]; then git -C "$SKILL_DIR" pull; else git clone https://github.com/karthikeyanV2K/agy-cli-skill.git "$SKILL_DIR"; fi; cat << "EOF" > "$RULE_DIR/eaf-orchestrator.md"
+# EAF Orchestrator Protocol Rule
+When the user starts a request with `/EAF`, activate the Enterprise Agent Framework (EAF) Orchestrator Mode.
+1. Classify task (BUG, FEATURE, REFACTOR, PERFORMANCE, SECURITY, ARCHITECTURE).
+2. Execute state machine: DISCOVERY -> RESEARCH -> ANALYSIS -> PLANNING -> IMPLEMENTATION -> VALIDATION -> REVIEW -> COMPLETE.
+3. Enforce AGENTS.md Engineering Laws 1-10 (Never blindly code, Knowledge states, Decision Ledger, Adversarial Review).
+EOF
+cp "$RULE_DIR/eaf-orchestrator.md" .gemini/rules/eaf-orchestrator.md
+echo -e "\n\033[0;32m Setup Complete! Use: /EAF <Prompt>\033[0m"'
 ```
 
 ---
 
-## 🎯 Why AGY CLI?
+## 🎯 How to Use
 
-Most AI coding tools generate code first, think later. **AGY CLI reverses that** — enforcing a disciplined engineering workflow where **no implementation begins until research, architecture, and knowledge gaps are resolved**.
+Once installed, simply start your task prompt with `/EAF` inside your AGY session:
 
-| Traditional AI Coding | AGY CLI Approach |
-|----------------------|------------------|
-| ❌ Guess → Code → Debug | ✅ Research → Plan → Implement → Verify |
-| ❌ Single model, single prompt | ✅ Specialized agents with distinct permissions |
-| ❌ No verification gates | ✅ Mechanical gates: Architecture, Test, Review |
-| ❌ Hardcoded assumptions | ✅ Assumption ledger + Decision ledger |
-| ❌ "Looks good" reviews | ✅ Adversarial review with REJECT power |
-| ❌ Fixed built-in capabilities | ✅ Pull external skills from GitHub |
+```bash
+/EAF Implement JWT authentication with Redis token blacklisting and rate limiting
+```
+```bash
+/EAF Fix memory leak and high CPU usage in worker queue
+```
+```bash
+/EAF Refactor database connection pool to support multi-region failover
+```
 
 ---
 
-## 🔌 Skill Integration Architecture
+## 🧠 EAF Orchestration Engine
+
+When `/EAF` is triggered, AGY switches from standard chat into Strict Orchestrator Mode:
+
+### 1. Task Classification & Routing
+
+Every task is automatically classified and routed through dedicated agent pipelines:
+
+| Task Type | Assigned Pipeline |
+| :--- | :--- |
+| **BUG** | `CODEBASE` ➔ `DEBUGGER` ➔ `TESTER` ➔ `REVIEWER` |
+| **FEATURE (Internal)** | `CODEBASE` ➔ `ARCHITECT` ➔ `IMPLEMENTER` ➔ `TESTER` ➔ `REVIEWER` |
+| **FEATURE (External API)** | `RESEARCHER` ➔ `CODEBASE` ➔ `ARCHITECT` ➔ `IMPLEMENTER` ➔ `TESTER` ➔ `REVIEWER` |
+| **REFACTOR** | `CODEBASE` ➔ `ARCHITECT` ➔ `IMPLEMENTER` ➔ `TESTER` ➔ `REVIEWER` |
+| **PERFORMANCE** | `RESEARCHER` ➔ `CODEBASE` ➔ `ARCHITECT` ➔ `IMPLEMENTER` ➔ `TESTER` ➔ `DEBUGGER` ➔ `REVIEWER` |
+| **SECURITY** | `RESEARCHER` ➔ `CODEBASE` ➔ `ARCHITECT` ➔ `SECURITY_REVIEW` ➔ `IMPLEMENTER` ➔ `TESTER` ➔ `REVIEWER` |
+| **ARCHITECTURE CHANGE** | `RESEARCHER` ➔ `CODEBASE` ➔ `ARCHITECT` ➔ `SECURITY_REVIEW` ➔ `IMPLEMENTER` ➔ `TESTER` ➔ `DEBUGGER` ➔ `REVIEWER` |
+
+---
+
+### 2. State Machine Enforcement
+
+Transitions sequentially with strict gating:
 
 ```mermaid
-flowchart TD
-    User[USER TASK] --> Pull[AGY PULL]
-    Pull --> Repo[EXTERNAL SKILL REPO]
-    Repo --> Registry[AGY SKILL REGISTRY]
-    Registry --> Orch[ORCHESTRATOR]
-    Orch --> Researcher[RESEARCHER]
-    Orch --> Architect[ARCHITECT]
-    Orch --> Implementer[IMPLEMENTER]
-    Orch --> Validator[VALIDATOR]
-    Orch --> Debugger[DEBUGGER]
-    Orch --> Reviewer[REVIEWER]
-    Researcher --> Flow[EXISTING AGY FLOW]
-    Architect --> Flow
-    Implementer --> Flow
-    Validator --> Flow
-    Debugger --> Flow
-    Reviewer --> Flow
-```
+flowchart LR
+    A[DISCOVERY] --> B[RESEARCH]
+    B --> C[ANALYSIS]
+    C --> D[PLANNING]
+    D --> E[IMPLEMENTATION]
+    E --> F[VALIDATION]
+    F --> G[DEBUGGING]
+    G --> H[REVIEW]
+    H --> I[COMPLETE]
 
-**Key principle**: Pulled `SKILL.md` files are treated as **agent capabilities/instructions**, not a new orchestration framework. They inject into the existing engineering state machine.
+    H -- Rejection --> E
+    F -- Failure --> G
+```
 
 ---
 
-## 🔄 How Skills Work Inside AGY Conversation Flow
+### 3. The 10 Core Engineering Laws
 
-When you run `agy task "..."`, here's how pulled skills become part of the engineering flow — **two modes**:
-
-### Mode 1: Automatic (Trigger-Based)
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant CLI
-    participant Orchestrator
-    participant SkillRegistry
-    participant Researcher
-    participant Architect
-    participant Implementer
-    participant Validator
-    participant Debugger
-    participant Reviewer
-
-    User->>CLI: agy pull <github-url>
-    CLI->>SkillRegistry: clone repo, find SKILL.md files
-    SkillRegistry->>SkillRegistry: parse frontmatter, store in .agy/skills/
-    SkillRegistry->>Config: update .agyrc with skill config
-    
-    User->>CLI: agy task "implement user authentication with JWT"
-    CLI->>Orchestrator: executeTask(description)
-    Orchestrator->>Orchestrator: classifyTask() → FEATURE_INTERNAL
-    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, reviewer]
-    
-    loop For each agent in chain
-        Orchestrator->>SkillRegistry: getSkillsForAgent(agent)
-        SkillRegistry-->>Orchestrator: relevant skills (by triggers + targetAgents)
-        Orchestrator->>ContextBuilder: buildContext(taskContext, agent, phase, previousResults)
-        ContextBuilder->>ContextBuilder: inject skill content into agent context
-        Orchestrator->>Agent: spawnAgent(agent, enrichedContext)
-        Agent-->>Orchestrator: result
-        Orchestrator->>Orchestrator: updateContextAfterAgent()
-    end
-
-    Orchestrator->>User: FinalVerification
-```
-
-### Mode 2: Explicit (`--skills` flag)
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant CLI
-    participant Orchestrator
-    participant SkillRegistry
-    participant Researcher
-    participant Architect
-    participant Implementer
-    participant Validator
-    participant Debugger
-    participant Reviewer
-
-    User->>CLI: agy pull <github-url>
-    CLI->>SkillRegistry: clone repo, find SKILL.md files
-    
-    User->>CLI: agy task "implement user authentication with JWT" --skills jwt-auth,security-best-practices
-    CLI->>Orchestrator: executeTask(description, explicitSkills=[jwt-auth,security-best-practices])
-    Orchestrator->>SkillRegistry: getSkillsByName([jwt-auth,security-best-practices])
-    SkillRegistry-->>Orchestrator: exact skills (bypassing trigger matching)
-    Orchestrator->>Orchestrator: classifyTask() → FEATURE_INTERNAL
-    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, reviewer]
-    
-    loop For each agent in chain
-        Orchestrator->>SkillRegistry: filter explicit skills for agent
-        Orchestrator->>ContextBuilder: buildContext(taskContext, agent, phase, previousResults)
-        ContextBuilder->>ContextBuilder: inject explicit skill content into agent context
-        Orchestrator->>Agent: spawnAgent(agent, enrichedContext)
-        Agent-->>Orchestrator: result
-        Orchestrator->>Orchestrator: updateContextAfterAgent()
-    end
-
-    Orchestrator->>User: FinalVerification
-```
-
-### Skill Injection Points
-
-| Phase | Agent | Skill Content Injected As |
-|-------|-------|--------------------------|
-| RESEARCH | Researcher | Additional research methodologies, source priorities, gap analysis frameworks |
-| ANALYSIS/PLANNING | Architect | Design patterns, architecture decision records, compatibility checklists |
-| IMPLEMENTATION | Implementer | Coding standards, anti-patterns, framework-specific guidelines |
-| VALIDATION | Validator | Test strategies, coverage targets, property-based testing approaches |
-| DEBUGGING | Debugger | Root cause templates, hypothesis generation frameworks |
-| REVIEW | Reviewer | Review checklists, security patterns, performance anti-patterns |
+1. **Never Blindly Code**: Mandatory codebase inspection, dependency checking, and flow mapping before editing.
+2. **Explicit Knowledge States**: Every assumption classified as `CONFIRMED`, `VERIFIED`, `INFERRED`, or `UNKNOWN`.
+3. **Research Before Implementation**: High-impact unknowns block coding until researched.
+4. **Decision Ledger**: Every architectural decision requires recorded options, rationale, and tradeoffs.
+5. **Adversarial Review**: Passes a 13-point adversarial review (Correctness, Security, Concurrency, Performance, etc.).
+6. **Zero Unjustified Hardcoding**: No magic values, fake configs, or environment assumptions.
+7. **Disciplined Failure Loops**: Reproduce ➔ Classify ➔ Root Cause ➔ Minimal Patch ➔ Retest.
+8. **Final Verification Gate**: Strict pre-completion checklist verification.
+9. **Budget Enforcement**: Hard stop limits on research, review, and debug loops.
+10. **Evidence-Based "Why"**: Clear evidence justifying why each file, function, and test was modified.
 
 ---
 
-## ⚡ EAF Command — Explicit Engineering Agent Framework
+## 📁 Repository Structure
 
-The `eaf` command runs the **full Engineering Agent Framework** with **explicit skill injection** — no trigger matching, no automatic selection. You specify exactly which skills to inject.
+```
+agy-cli-skill/
+├── SKILL.md                 # Skill manifest and triggers
+├── AGENTS.md                # Orchestration laws & state machine rules
+├── install.ps1              # Windows 1-click installer
+├── install.sh               # Linux/macOS 1-click installer
+├── README.md                # Documentation & usage guide
+├── .gemini/rules/           # EAF Orchestrator rule
+└── skills/
+    ├── engineering/         # Master workflow gate rules
+    ├── research/            # Knowledge gap resolution
+    ├── architecture/        # System design & decision ledger
+    ├── implementation/      # Clean code & anti-hardcoding
+    ├── debugging/           # Failure loop discipline
+    ├── testing/             # 6-level test validation
+    └── review/              # 13-dimension adversarial review
+```
+
+---
+
+## 🛠️ AGY CLI Native Commands
 
 ```bash
-# EAF requires explicit skills via --skills flag
-agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices
-
-# Dry run to preview
-agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices --dry-run
-
-# Alias also works
-agy EAF "add rate limiting to API" --skills rate-limiting,api-design-patterns
-```
-
-### EAF vs Task
-
-| Command | Skill Selection | Use Case |
-|---------|-----------------|----------|
-| `agy task "..."` | Automatic (trigger-based) | Let AGY choose relevant skills |
-| `agy task "..." --skills a,b` | Explicit (optional) | Override with specific skills |
-| `agy eaf "..." --skills a,b` | **Explicit (required)** | Full control, no trigger matching |
-
-### EAF Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant CLI
-    participant Orchestrator
-    participant SkillRegistry
-    participant Researcher
-    participant Architect
-    participant Implementer
-    participant Validator
-    participant Debugger
-    participant Reviewer
-
-    User->>CLI: agy pull <github-url>
-    CLI->>SkillRegistry: clone repo, find SKILL.md files
-    
-    User->>CLI: agy eaf "implement user authentication with JWT" --skills jwt-auth,security-best-practices
-    CLI->>Orchestrator: executeTask(description, explicitSkills=[...])
-    Orchestrator->>SkillRegistry: getSkillsByName([jwt-auth,security-best-practices])
-    SkillRegistry-->>Orchestrator: exact skills (NO trigger matching)
-    Orchestrator->>Orchestrator: classifyTask() → FEATURE_INTERNAL
-    Orchestrator->>Orchestrator: getChainForTask() → [researcher, architect, implementer, validator, reviewer]
-    
-    loop For each agent in chain
-        Orchestrator->>SkillRegistry: filter explicit skills for agent
-        Orchestrator->>ContextBuilder: buildContext(taskContext, agent, phase, previousResults)
-        ContextBuilder->>ContextBuilder: inject explicit skill content into agent context
-        Orchestrator->>Agent: spawnAgent(agent, enrichedContext)
-        Agent-->>Orchestrator: result
-        Orchestrator->>Orchestrator: updateContextAfterAgent()
-    end
-
-    Orchestrator->>User: FinalVerification
-```
-
----
-
-## 🏗️ Architecture Overview
-flowchart TD
-    User[USER TASK] --> Orch[ORCHESTRATOR]
-    Orch --> Decompose[DECOMPOSE TASK]
-    Decompose --> Codebase[CODEBASE ANALYSIS]
-    Decompose --> Research[KNOWLEDGE RESEARCH]
-    Codebase --> CrossValidate[CROSS VALIDATE]
-    Research --> CrossValidate
-    CrossValidate --> Architect[ARCHITECTURE GATE]
-    Architect --> Implement[IMPLEMENTATION]
-    Implement --> Test[TEST & VALIDATION]
-    Test -->|PASS| Review[ADVERSARIAL REVIEW]
-    Test -->|FAIL| Debug[DEBUGGER → RE-TEST]
-    Debug --> Test
-    Review -->|PASS| Complete[FINISH]
-    Review -->|REJECT| Implement
-```
-
-### Core Principles
-
-| Principle | Description |
-|-----------|-------------|
-| **DISCOVER → RESEARCH → REASON → PLAN → IMPLEMENT → VERIFY → REVIEW** | Seven-phase engineering lifecycle |
-| **No Implementation Before Research Gate** | Knowledge gaps = blocker, not guesswork |
-| **Specialized Agent Permissions** | Researcher reads only, Implementer writes, Reviewer rejects |
-| **Assumption Ledger** | Every assumption tracked: CONFIRMED / VERIFIED / INFERRED / UNKNOWN |
-| **Decision Ledger** | Architectural choices documented with tradeoffs |
-| **Configurable Budgets** | Research rounds, review rounds, debug iterations |
-
----
-
-## 🤖 Agent Roster
-
-| Agent | Role | Permissions | Key Responsibility |
-|-------|------|-------------|-------------------|
-| **Orchestrator** | Central coordinator | READ, PLAN, SPAWN | Task decomposition, agent assignment, progress monitoring |
-| **Researcher** | Knowledge investigator | READ, SEARCH, EXECUTE | Authoritative source lookup, API verification, gap analysis |
-| **Architect** | System designer | READ, SEARCH, PLAN | Architecture plans, data/control flow, failure mode analysis |
-| **Implementer** | Code producer | READ, WRITE, EXECUTE | Minimal changes, reuse abstractions, no hardcoding |
-| **Tester** | Validation engineer | READ, WRITE (tests), EXECUTE | Multi-level validation: format → static → unit → integration → e2e |
-| **Debugger** | Root cause analyst | READ, WRITE, EXECUTE | Hypothesis-driven debugging, evidence-based fixes |
-| **Reviewer** | Adversarial auditor | READ, SEARCH, EXECUTE, REJECT | 13-category review, can REJECT even with passing tests |
-
----
-
-## 🛠️ Skill System
-
-| Skill | Purpose |
-|-------|---------|
-| **Engineering** | Master rules: DISCOVER→RESEARCH→REASON→PLAN→IMPLEMENT→VERIFY→REVIEW |
-| **Research** | Targeted knowledge acquisition from authoritative sources |
-| **Architecture** | Design gates, data flow, dependency analysis, compatibility |
-| **Implementation** | Minimal-change rules, abstraction reuse, anti-hardcoding |
-| **Debugging** | CLASSIFY→REPRODUCE→LOCATE→HYPOTHESIZE→PATCH→RETEST |
-| **Testing** | Six validation levels with project-appropriate selection |
-| **Review** | 13 adversarial categories: correctness, security, performance, etc. |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Node.js 18+** or **Python 3.10+**
-- **Git** for version control
-- **GitHub CLI (`gh`)** for repository management (optional but recommended)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/karthikeyanV2K/agy-cli.git
-cd agy-cli
-
-# Install dependencies (Node.js)
-npm install
-
-# OR install dependencies (Python)
-pip install -r requirements.txt
-```
-
-### Configuration
-
-Create a `.agyrc` configuration file (copy from `.agyrc.example`):
-
-```yaml
-# .agyrc
-orchestrator:
-  # Supports any Oz-compatible model (Gemini, Claude, GPT, etc.)
-  # Available Gemini: gemini-2.5-flash-lite, gemini-3-flash, gemini-3.1-pro,
-  # gemini-3.5-flash, gemini-3.6-flash, gemini-3.7-flash
-  model: "gemini-3.5-flash"
-  max_concurrent_agents: 4
-  research_budget:
-    max_rounds: 3
-  review_budget:
-    max_rounds: 2
-  debug_budget:
-    max_iterations: 5
-
-agents:
-  researcher:
-    permissions: [read, search, execute]
-    # model: "gemini-3.7-flash"  # Per-agent override (optional)
-  architect:
-    permissions: [read, search, plan]
-  implementer:
-    permissions: [read, write, execute]
-  tester:
-    permissions: [read, write:tests, execute]
-  reviewer:
-    permissions: [read, search, execute, reject]
-  debugger:
-    permissions: [read, write, execute]
-
-skills:
-  - engineering
-  - research
-  - architecture
-  - implementation
-  - debugging
-  - testing
-  - review
-```
-
-### Running AGY CLI
-
-```bash
-# Basic task execution
-agy task "implement user authentication with JWT"
-
-# With specific agent chain
-agy task "refactor database layer" --agents researcher,architect,implementer,tester,reviewer
-
-# Verbose output with budget tracking
-agy task "add rate limiting to API" --verbose --budget-tracking
-
-# Dry run (plan only, no implementation)
-agy task "migrate to TypeScript" --dry-run
-
-# Pull external skills from the official AGY skills repository
+# Pull external skills directly
 agy pull https://github.com/karthikeyanV2K/agy-cli-skill
 
 # List installed skills
 agy skill list
 
-# Remove a skill
-agy skill remove <skill-name>
+# Execute task with explicit skills
+agy eaf "your task" --skills engineering,implementation,testing,review
 
-# Automatic skill matching (trigger-based)
-agy task "implement user authentication with JWT"
-
-# Explicit skills (bypass trigger matching)
-# First list skills to see available names
-agy skill list
-# Then run with explicit skills (using built-in skill names)
-agy task "implement user authentication with JWT" --skills engineering,implementation,testing,review
-
-# EAF command - explicit Engineering Agent Framework (skills REQUIRED)
-# First list skills to see available names
-agy skill list
-# Then run EAF with explicit skills
-agy eaf "implement user authentication with JWT" --skills engineering,implementation,testing,review
-
-# EAF dry run
-agy eaf "implement user authentication with JWT" --skills engineering,implementation,testing,review --dry-run
-```
-
----
-
-## 📁 Project Structure
-
-```
-agy-cli/
-├── AGENTS.md                    # Project-wide mandatory rules
-├── README.md                    # This file
-├── .agyrc                       # Configuration (create from .agyrc.example)
-├── package.json                 # Node.js dependencies
-├── tsconfig.json                # TypeScript configuration
-├── src/
-│   ├── agents/                  # Agent implementations
-│   │   ├── base.ts              # Base agent class
-│   │   ├── orchestrator.ts
-│   │   ├── researcher.ts
-│   │   ├── architect.ts
-│   │   ├── implementer.ts
-│   │   ├── debugger.ts
-│   │   ├── tester.ts
-│   │   └── reviewer.ts
-│   ├── orchestrator/            # Orchestration engine
-│   │   ├── task-classifier.ts   # Mechanical task classification
-│   │   ├── agent-chain.ts       # Agent chains & gate verification
-│   │   ├── context-builder.ts   # Controlled context packages
-│   │   └── orchestrator.ts      # Main state machine loop
-│   ├── skills/                  # Skill system
-│   │   ├── registry.ts          # Skill registry & GitHub pull
-│   │   └── index.ts
-│   ├── config/                  # Configuration system
-│   │   └── index.ts             # Zod-validated config loader
-│   ├── tools/                   # Tool layer
-│   │   ├── registry.ts          # Tool registry with permissions
-│   │   ├── file-ops.ts          # File operations
-│   │   ├── shell.ts             # Shell command execution
-│   │   ├── search.ts            # Search operations
-│   │   └── types.ts             # Tool type definitions
-│   ├── state-machine/           # State machine components
-│   │   ├── phases.ts            # Phase definitions
-│   │   ├── gates.ts             # Gate verification
-│   │   ├── budget.ts            # Budget enforcement
-│   │   ├── ledger.ts            # Assumption/decision ledgers
-│   │   └── index.ts
-│   ├── types/                   # TypeScript type definitions
-│   │   └── index.ts
-│   ├── output/                  # Output formatting
-│   │   └── formatter.ts         # Rich terminal output
-│   ├── cli.ts                   # CLI entry point
-│   └── index.ts                 # Module exports
-└── .agents/                     # Agent & skill specs (Markdown)
-    ├── agents/
-    │   ├── orchestrator/
-    │   ├── researcher/
-    │   ├── architect/
-    │   ├── implementer/
-    │   ├── debugger/
-    │   ├── tester/
-    │   └── reviewer/
-    ├── skills/
-    │   ├── engineering/
-    │   ├── research/
-    │   ├── architecture/
-    │   ├── implementation/
-    │   ├── debugging/
-    │   ├── testing/
-    │   └── review/
-    └── policies/
-```
-
----
-
-## 🏛️ Core Implementation ("Caveman" Layer)
-
-The foundational AGY engineering flow — the **mechanical state machine, gate verification, budget enforcement, and agent orchestration** — lives in these core modules:
-
-| Component | File | Responsibility |
-|-----------|------|----------------|
-| **State Machine Phases** | `src/state-machine/phases.ts` | 9-phase definitions: DISCOVERY → RESEARCH → ANALYSIS → PLANNING → IMPLEMENTATION → VALIDATION → DEBUGGING → REVIEW → COMPLETE |
-| **Gate Verification** | `src/state-machine/gates.ts` | Mechanical gate checks (no LLM calls) — repository inspected, requirements decomposed, architecture gate, build verification, test verification, regression check |
-| **Budget Enforcement** | `src/state-machine/budget.ts` | Research (3), Review (2), Debug (5), Total (10) — hard limits with rejection transitions |
-| **Assumption/Decision Ledgers** | `src/state-machine/ledger.ts` | Track CONFIRMED/VERIFIED/INFERRED/UNKNOWN knowledge states, architectural decisions with tradeoffs |
-| **Task Classification** | `src/orchestrator/task-classifier.ts` | Mechanical keyword/pattern matching for 11 task types (BUG, FEATURE_INTERNAL, FEATURE_EXTERNAL, REFACTOR, PERFORMANCE, SECURITY, ARCHITECTURE, KERNEL_DRIVER, BUILD_CI, TEST, DOCUMENTATION) |
-| **Agent Chains** | `src/orchestrator/agent-chain.ts` | Per-task-type agent chains per AGENTS.md spec, gate requirements per phase, rejection transitions |
-| **Context Builder** | `src/orchestrator/context-builder.ts` | Controlled context packages per agent (only relevant data per Context Package Protocol) |
-| **Main Orchestrator** | `src/orchestrator/orchestrator.ts` | State machine execution loop, budget checks, agent spawning, rejection handling |
-| **Base Agent** | `src/agents/base.ts` | Abstract base class with phase transitions, permission checks, result handling |
-| **Concrete Agents** | `src/agents/*.ts` | Researcher, Architect, Implementer, Validator, Debugger, Reviewer implementations |
-| **Skill Registry** | `src/skills/registry.ts` | GitHub pull, SKILL.md discovery, frontmatter parsing, agent skill injection |
-| **Tool Layer** | `src/tools/registry.ts` | Tool registration with permission enforcement (read/write/execute/network) |
-| **Config System** | `src/config/index.ts` | Zod-validated `.agyrc` loading, skill config persistence |
-| **Types** | `src/types/index.ts` | All TypeScript interfaces: TaskContext, ResearchResult, ArchitecturePlan, SkillConfig, etc. |
-
-### Key Characteristics of Core Layer
-
-- **Zero LLM calls in gates** — All verification is mechanical (boolean checks on TaskContext flags)
-- **No hardcoded assumptions** — Budgets, timeouts, agent chains all configurable via `.agyrc`
-- **Rejection transitions** — Failed gates automatically route back to earlier phases (PLANNING → RESEARCH, VALIDATION → DEBUGGING, REVIEW → IMPLEMENTATION)
-- **Budget as blocker** — Exhausted budget = BLOCKED state, not silent failure
-- **Context isolation** — Agents receive only relevant data via `buildContext()`
-
----
-
-## 🔧 Advanced Usage
-
-### Custom Agent Chains
-
-```bash
-# Security-focused workflow
-agy task "audit authentication flow" \
-  --chain researcher,architect,security-reviewer,implementer,tester
-
-# Performance optimization
-agy task "optimize query latency" \
-  --chain researcher,architect,implementer,tester,profiler
-
-# Kernel/driver development
-agy task "add PCIe driver support" \
-  --chain researcher,codebase-analyst,architect,security-reviewer,implementer,tester,debugger,reviewer
-```
-
-### Knowledge State Tracking
-
-AGY CLI explicitly tracks knowledge states:
-
-```bash
-# View assumption ledger
-agy assumptions list
-
-# Check for UNKNOWN high-impact assumptions
-agy assumptions check --high-impact
-
-# View decision ledger
-agy decisions list
-```
-
-### Budget Management
-
-```bash
-# Set custom budgets
-agy config set research_budget.max_rounds 5
-agy config set review_budget.max_rounds 3
-agy config set debug_budget.max_iterations 10
-
-# View current budgets
-agy config show budgets
-```
-
----
-
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| [AGENTS.md](AGENTS.md) | Project-wide mandatory rules for all agents |
-| [Architecture Guide](docs/architecture.md) | Detailed system architecture |
-| [Agent Development](docs/agents.md) | Creating custom agents |
-| [Skill Development](docs/skills.md) | Building custom skills |
-| [Configuration Reference](docs/config.md) | Complete `.agyrc` reference |
-| [API Reference](docs/api.md) | Programmatic API documentation |
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-```bash
-# Fork and clone
-git clone https://github.com/YOUR_USERNAME/agy-cli.git
-cd agy-cli
-# Add upstream for syncing
-# git remote add upstream https://github.com/karthikeyanV2K/agy-cli.git
-
-# Create feature branch
-git checkout -b feature/amazing-feature
-
-# Make changes with AGY CLI dogfooding
-agy task "add amazing feature"
-
-# Run tests
-npm test
-
-# Submit PR
-gh pr create --title "Add amazing feature" --body "Description..."
+# Dry run mode
+agy eaf "your task" --dry-run
 ```
 
 ---
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## 🌟 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=karthikeyanV2K/agy-cli&type=Date)](https://star-history.com/#karthikeyanV2K/agy-cli&Date)
-
----
-
-## 🔗 Links
-
-- **GitHub Repository**: https://github.com/karthikeyanV2K/agy-cli
-- **Issues & Bug Reports**: https://github.com/karthikeyanV2K/agy-cli/issues
-- **Discussions**: https://github.com/karthikeyanV2K/agy-cli/discussions
-- **Releases**: https://github.com/karthikeyanV2K/agy-cli/releases
-
----
-
-## 🙏 Acknowledgments
-
-- Inspired by rigorous software engineering practices from kernel development, aerospace, and high-assurance systems
-- Built for developers who believe **AI should amplify engineering discipline, not replace it**
-- Special thanks to the Warp/Oz platform for orchestration primitives
-
----
-
-<div align="center">
-
-**Made with ❤️ for engineers who care about correctness**
-
-[⬆ Back to Top](#agy-cli--antigravity-engineering-agent-framework)
-
-</div>
+MIT License © [Karthikeyan](https://github.com/karthikeyanV2K)
