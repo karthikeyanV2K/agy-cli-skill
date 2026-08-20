@@ -14,6 +14,18 @@ Classify the task into one of the standard archetypes and assign the agent pipel
 - **SECURITY**: `RESEARCHER` → `CODEBASE` → `ARCHITECT` → `SECURITY_REVIEW` → `IMPLEMENTER` → `TESTER` → `REVIEWER`
 - **ARCHITECTURE CHANGE**: `RESEARCHER` → `CODEBASE` → `ARCHITECT` → `SECURITY_REVIEW` → `IMPLEMENTER` → `TESTER` → `DEBUGGER` → `REVIEWER`
 
+### Subagent Roles, Functions & Tool Sets
+| Subagent Role | Primary Function | Available Tools |
+| :--- | :--- | :--- |
+| 👑 **Orchestrator** | Enforces state machine transitions, budgets, and gate checks | Full Management (`spawn_agent`, `read_context`, `write_context`, `check_gates`, `enforce_budget`, `update_ledger`, `manage_subagents`, `invoke_subagent`, `send_message`, `schedule`) |
+| 🏛️ **Architect** | Designs data flow, component boundaries, and mitigations | Read-Only / Planning (`read_codebase`, `search_code`, `read_docs`, `write_plan`, `verify_compatibility`, `view_file`, `find_by_name`, `grep_search`) |
+| 💻 **Implementer** | Writes surgical, production-ready code matching plan | File Edit / Build (`read_file`, `write_file`, `edit_file`, `replace_file_content`, `run_build`, `run_tests`, `run_lint`, `run_command`) |
+| 🐞 **Debugger** | Isolates root causes, reproduces bugs, forms hypotheses | Trace / Diagnostics (`read_logs`, `run_test`, `trace_execution`, `inspect_memory`, `read_registers`, `apply_patch`, `verify_fix`, `replace_file_content`, `run_command`, `view_file`, `grep_search`) |
+| 🧪 **Tester** | Generates deterministic unit and integration test suites | Test Runners (`run_format`, `run_static_analysis`, `run_build`, `run_unit_tests`, `run_integration_tests`, `run_e2e_tests`, `run_security_scan`, `run_qemu`, `run_kernel_tests`, `measure_coverage`, `write_file`, `run_command`) |
+| 🛡️ **Reviewer** | Executes 13-point adversarial review and security analysis | Static Analysis / Diff (`read_diff`, `static_analysis`, `security_scan`, `performance_profile`, `check_assumptions`, `check_decisions`, `audit_hardcoding`, `verify_regression_tests`, `view_file`, `grep_search`, `run_command`) |
+| 🔍 **Researcher** | Queries official documentation and resolves knowledge gaps | Web Search / Docs (`search_codebase`, `search_web`, `read_url_content`, `read_official_docs`, `read_source_code`, `cross_validate`, `write_findings`, `find_by_name`, `grep_search`, `view_file`) |
+
+
 ---
 
 ## 2. The 10 Core Engineering Laws
@@ -39,13 +51,27 @@ DISCOVERY ──> RESEARCH ──> ANALYSIS ──> PLANNING ──> IMPLEMENTAT
 
 ---
 
-## 4. Execution Output Structure
+## 4. Dynamic Caveman Budget System (Low Token, High Work)
+Enforces high reasoning depth with minimum token overhead:
+- **Complexity Tiers**:
+  - `MINIMAL` (Doc / Format / CI): 1 Research, 1 Review, 2 Debug | 1,500 Thinking Tokens | 500 Max Output
+  - `STANDARD` (Bug / Feature / Refactor): 2 Research, 2 Review, 3 Debug | 3,000 Thinking Tokens | 1,000 Max Output
+  - `COMPLEX` (External API / Perf / Arch): 3 Research, 2 Review, 5 Debug | 4,000 Thinking Tokens | 1,500 Max Output
+  - `EXTREME` (Kernel / Driver / Security): 4 Research, 3 Review, 6 Debug | 5,000 Thinking Tokens | 2,000 Max Output
+- **Telegraphic Transmission**: Eliminate conversational fluff; communicate dense, verifiable technical facts (`[CONFIRMED] path:line`, `[DECISION] choice | reason | tradeoff`, `[PATCH] diff`).
+- **Elastic Surplus Pool**: Unused rounds in upstream phases (e.g. Discovery/Research completing with 0 gaps) are automatically credited to downstream phases (Testing/Debug).
+- **Fast-Path Bailouts**: 0 knowledge gaps in Discovery skips Research phase; 100% test pass on first build skips Debugger.
+
+---
+
+## 5. Execution Output Structure
 When executing `/EAF <prompt>`, render each phase explicitly:
-1. **[TASK CLASSIFICATION & AGENT ROUTE]**
-2. **[DISCOVERY FINDINGS]**
+1. **[TASK CLASSIFICATION, COMPLEXITY TIER & AGENT ROUTE]**
+2. **[DISCOVERY FINDINGS & TOKEN BUDGET STATUS]**
 3. **[ASSUMPTION LEDGER]**
 4. **[DECISION LEDGER & ARCHITECTURE PLAN]**
 5. **[IMPLEMENTATION & WHY ANALYSIS]**
 6. **[VALIDATION & TEST RESULTS]**
 7. **[13-CATEGORY ADVERSARIAL REVIEW REPORT]**
-8. **[FINAL VERIFICATION CHECKLIST]**
+8. **[FINAL VERIFICATION CHECKLIST & BUDGET SUMMARY]**
+

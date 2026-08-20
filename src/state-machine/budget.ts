@@ -1,4 +1,81 @@
 /**
+ * Task complexity tiers for dynamic budget allocation
+ */
+export type TaskComplexityTier = 'MINIMAL' | 'STANDARD' | 'COMPLEX' | 'EXTREME';
+
+/**
+ * Dynamic budget configuration per complexity tier
+ */
+export interface ComplexityBudgetConfig {
+  research: number;
+  review: number;
+  debug: number;
+  total: number;
+  thinkingTokens: number;
+  maxOutputTokens: number;
+}
+
+/**
+ * Dynamic Caveman Budget Tiers: High Reasoning, Low Output Tokens
+ */
+export const COMPLEXITY_BUDGET_TIERS: Record<TaskComplexityTier, ComplexityBudgetConfig> = {
+  MINIMAL: {
+    research: 1,
+    review: 1,
+    debug: 2,
+    total: 4,
+    thinkingTokens: 1500,
+    maxOutputTokens: 500,
+  },
+  STANDARD: {
+    research: 2,
+    review: 2,
+    debug: 3,
+    total: 7,
+    thinkingTokens: 3000,
+    maxOutputTokens: 1000,
+  },
+  COMPLEX: {
+    research: 3,
+    review: 2,
+    debug: 5,
+    total: 10,
+    thinkingTokens: 4000,
+    maxOutputTokens: 1500,
+  },
+  EXTREME: {
+    research: 4,
+    review: 3,
+    debug: 6,
+    total: 13,
+    thinkingTokens: 5000,
+    maxOutputTokens: 2000,
+  },
+};
+
+/**
+ * Computes dynamic task complexity tier based on archetype, gaps, and file footprint
+ */
+export function computeTaskComplexity(
+  taskType: string,
+  gapsCount: number = 0,
+  affectedFilesCount: number = 0
+): TaskComplexityTier {
+  const upperType = taskType.toUpperCase();
+
+  if (upperType.includes('KERNEL') || upperType.includes('DRIVER') || upperType.includes('SECURITY')) {
+    return 'EXTREME';
+  }
+  if (upperType.includes('ARCHITECTURE') || upperType.includes('PERFORMANCE') || upperType.includes('EXTERNAL') || gapsCount >= 3 || affectedFilesCount > 5) {
+    return 'COMPLEX';
+  }
+  if (upperType.includes('DOC') || upperType.includes('BUILD') || upperType.includes('FORMAT') || (gapsCount === 0 && affectedFilesCount <= 1)) {
+    return 'MINIMAL';
+  }
+  return 'STANDARD';
+}
+
+/**
  * Budget status for a single budget category
  */
 export interface BudgetStatus {
@@ -6,15 +83,20 @@ export interface BudgetStatus {
   limit: number;
   remaining: number;
   exhausted: boolean;
+  surplusCredit?: number;
 }
 
 /**
  * Complete budget status across all categories
  */
 export interface BudgetTrackerStatus {
+  tier: TaskComplexityTier;
   research: BudgetStatus;
   review: BudgetStatus;
   debug: BudgetStatus;
+  thinkingTokens: number;
+  tokensConsumed: number;
+  surplusPool: number;
   overallExhausted: boolean;
 }
 
@@ -28,28 +110,94 @@ export const DEFAULT_BUDGET_LIMITS = {
 } as const;
 
 /**
- * BudgetTracker class for enforcing configurable budgets
- * Research budget: max research rounds (default: 3)
- * Review budget: max review rounds (default: 2)
- * Debug budget: max fix iterations (default: 5)
+ * DynamicCavemanBudgetTracker class
+ * Implements low-token, high-reasoning dynamic budget scaling:
+ * - Dynamic task-tier limits
+ * - Elastic surplus pool (saves unused rounds for downstream phases)
+ * - Strict token throttling & circuit breaker
  */
 export class BudgetTracker {
   private researchCount: number = 0;
   private reviewCount: number = 0;
   private debugCount: number = 0;
+  private tokensConsumed: number = 0;
+  private surplusPool: number = 0;
 
-  private readonly researchLimit: number;
-  private readonly reviewLimit: number;
-  private readonly debugLimit: number;
+  private researchLimit: number;
+  private reviewLimit: number;
+  private debugLimit: number;
+  private thinkingTokens: number;
+  private tier: TaskComplexityTier;
 
   /**
-   * Create a new BudgetTracker with optional custom limits
-   * @param limits - Custom budget limits (uses defaults if not provided)
+   * Create a new BudgetTracker with optional dynamic complexity tier or custom limits
    */
-  constructor(limits?: Partial<Record<keyof typeof DEFAULT_BUDGET_LIMITS, number>>) {
-    this.researchLimit = limits?.research ?? DEFAULT_BUDGET_LIMITS.research;
-    this.reviewLimit = limits?.review ?? DEFAULT_BUDGET_LIMITS.review;
-    this.debugLimit = limits?.debug ?? DEFAULT_BUDGET_LIMITS.debug;
+  constructor(
+    limitsOrTier?: Partial<Record<keyof typeof DEFAULT_BUDGET_LIMITS, number>> | TaskComplexityTier
+  ) {
+    if (typeof limitsOrTier === 'string' && limitsOrTier in COMPLEXITY_BUDGET_TIERS) {
+      this.tier = limitsOrTier as TaskComplexityTier;
+      const config = COMPLEXITY_BUDGET_TIERS[this.tier];
+      this.researchLimit = config.research;
+      this.reviewLimit = config.review;
+      this.debugLimit = config.debug;
+      this.thinkingTokens = config.thinkingTokens;
+    } else {
+      const limits = limitsOrTier as Partial<Record<keyof typeof DEFAULT_BUDGET_LIMITS, number>> | undefined;
+      this.tier = 'STANDARD';
+      this.researchLimit = limits?.research ?? DEFAULT_BUDGET_LIMITS.research;
+      this.reviewLimit = limits?.review ?? DEFAULT_BUDGET_LIMITS.review;
+      this.debugLimit = limits?.debug ?? DEFAULT_BUDGET_LIMITS.debug;
+      this.thinkingTokens = 3000;
+    }
+  }
+
+  /**
+   * Adaptively scale budget based on task inspection findings
+   */
+  scaleComplexity(tier: TaskComplexityTier): void {
+    this.tier = tier;
+    const config = COMPLEXITY_BUDGET_TIERS[tier];
+    this.researchLimit = Math.max(this.researchCount, config.research);
+    this.reviewLimit = Math.max(this.reviewCount, config.review);
+    this.debugLimit = Math.max(this.debugCount, config.debug);
+    this.thinkingTokens = config.thinkingTokens;
+  }
+
+  /**
+   * Record unused budget from a completed phase into the surplus credit pool
+   */
+  reclaimUnusedToSurplus(type: 'research' | 'review' | 'debug'): number {
+    const remaining = this.getRemaining(type);
+    if (remaining > 0) {
+      this.surplusPool += remaining;
+      // Adjust limit to actual used to lock savings
+      if (type === 'research') this.researchLimit = this.researchCount;
+      if (type === 'review') this.reviewLimit = this.reviewCount;
+      if (type === 'debug') this.debugLimit = this.debugCount;
+    }
+    return this.surplusPool;
+  }
+
+  /**
+   * Borrow from surplus pool if phase needs extra iteration
+   */
+  borrowFromSurplus(type: 'research' | 'review' | 'debug', amount: number = 1): boolean {
+    if (this.surplusPool >= amount) {
+      this.surplusPool -= amount;
+      if (type === 'research') this.researchLimit += amount;
+      if (type === 'review') this.reviewLimit += amount;
+      if (type === 'debug') this.debugLimit += amount;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Track token usage
+   */
+  recordTokenUsage(tokens: number): void {
+    this.tokensConsumed += tokens;
   }
 
   /**
@@ -89,8 +237,13 @@ export class BudgetTracker {
     const limit = this.getLimit(type);
 
     if (current >= limit) {
+      // Try to auto-reclaim from surplus pool first
+      if (this.borrowFromSurplus(type, 1)) {
+        return;
+      }
+
       throw new Error(
-        `${type.toUpperCase()}_BUDGET exhausted: ${current}/${limit} used. ` +
+        `${type.toUpperCase()}_BUDGET exhausted: ${current}/${limit} used (Tier: ${this.tier}). ` +
         'STOP, REPORT BLOCKER, DO NOT PRETEND SUCCESS (Law 10)'
       );
     }
@@ -125,6 +278,8 @@ export class BudgetTracker {
     this.researchCount = 0;
     this.reviewCount = 0;
     this.debugCount = 0;
+    this.tokensConsumed = 0;
+    this.surplusPool = 0;
   }
 
   /**
@@ -136,9 +291,13 @@ export class BudgetTracker {
     const debug = this.getBudgetStatus('debug');
 
     return {
+      tier: this.tier,
       research,
       review,
       debug,
+      thinkingTokens: this.thinkingTokens,
+      tokensConsumed: this.tokensConsumed,
+      surplusPool: this.surplusPool,
       overallExhausted: research.exhausted || review.exhausted || debug.exhausted,
     };
   }
@@ -154,6 +313,7 @@ export class BudgetTracker {
       limit,
       remaining: Math.max(0, limit - used),
       exhausted: used >= limit,
+      surplusCredit: this.surplusPool,
     };
   }
 
@@ -196,10 +356,13 @@ export class BudgetTracker {
    * Create a new BudgetTracker with the same limits but reset counters
    */
   clone(): BudgetTracker {
-    return new BudgetTracker({
+    const clone = new BudgetTracker({
       research: this.researchLimit,
       review: this.reviewLimit,
       debug: this.debugLimit,
     });
+    clone.tier = this.tier;
+    clone.thinkingTokens = this.thinkingTokens;
+    return clone;
   }
-}
+}

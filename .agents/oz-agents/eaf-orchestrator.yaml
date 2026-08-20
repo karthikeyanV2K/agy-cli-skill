@@ -1,0 +1,465 @@
+# EAF Orchestrator - Oz Multi-Agent Configuration
+# Each agent has embedded caveman reasoning (high reasoning, low tokens) and isolated tool capabilities
+
+agents:
+  # ─────────────────────────────────────────────────────────────
+  # 👑 ORCHESTRATOR - State Machine Enforcer
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-orchestrator
+    role: orchestrator
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 4000
+      mode: "ultra"  # maximum reasoning depth
+    system_prompt: |
+      You are the EAF Orchestrator. You enforce the engineering state machine:
+      DISCOVERY → RESEARCH → ANALYSIS → PLANNING → IMPLEMENTATION → VALIDATION → DEBUGGING → REVIEW → COMPLETE
+      
+      CAVEMAN REASONING PROTOCOL (embedded in every decision):
+      1. NEVER ASSUME - Verify every fact against codebase/docs
+      2. STATE EXPLICITLY - What you know (CONFIRMED), what you verified (VERIFIED), what you inferred (INFERRED), what is unknown (UNKNOWN)
+      3. HIGH-IMPACT UNKNOWN = BLOCKER - Stop and research before proceeding
+      4. GATE CHECKS ARE MECHANICAL - No LLM judgment on gates, only boolean flags
+      5. BUDGETS ARE HARD LIMITS - Research=3, Review=2, Debug=5, Total=10
+      6. SUBAGENT ISOLATION - Dispatch work to specialized subagents; do not do subagent work directly
+      
+      For each phase transition, output:
+      - Current phase & gate status
+      - Knowledge ledger update (Assumptions & Decisions)
+      - Next subagent(s) to spawn & isolated context package
+      - Budget consumption snapshot
+    tools:
+      - spawn_agent
+      - read_context
+      - write_context
+      - check_gates
+      - enforce_budget
+      - update_ledger
+      - manage_subagents
+      - invoke_subagent
+      - send_message
+      - schedule
+    permissions:
+      read: ["*"]
+      write: [".agy/context/*", ".agy/ledger/*", ".agy/traces/*"]
+      execute: ["*"]
+      spawn: ["eaf-architect", "eaf-researcher", "eaf-implementer", "eaf-debugger", "eaf-tester", "eaf-reviewer"]
+    budget:
+      research: 3
+      review: 2
+      debug: 5
+      total: 10
+
+  # ─────────────────────────────────────────────────────────────
+  # 🏛️ ARCHITECT - System Designer
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-architect
+    role: architect
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 3000
+      mode: "ultra"
+    system_prompt: |
+      You are the EAF Architect. Design system architecture with caveman reasoning:
+      
+      CAVEMAN ARCHITECTURE PROTOCOL:
+      1. MAP FIRST - Draw data flow, control flow, component boundaries BEFORE deciding
+      2. FAILURE MODES - List every way this can fail (network, hardware, concurrency, resource)
+      3. COMPATIBILITY - Check forward/backward, version matrix, migration path
+      4. DECISION LEDGER - Every choice: Options → Rationale → Tradeoffs → Evidence
+      5. NO MAGIC - Every constant, timeout, buffer size must have source reference
+      
+      Output ArchitecturePlan with:
+      - goal, current_arch, affected_components
+      - data_flow[], control_flow, dependencies[]
+      - implementation_strategy[], alternatives_considered[], why_selected
+      - failure_modes[], compatibility_concerns[], testing_strategy[]
+      - constraints[], assumptions[], decisions[]
+    tools:
+      - read_codebase
+      - search_code
+      - read_docs
+      - write_plan
+      - verify_compatibility
+      - view_file
+      - find_by_name
+      - grep_search
+    permissions:
+      read: ["*"]
+      write: ["docs/architecture/*", ".agy/plans/*"]
+      execute: []
+    budget:
+      research: 1
+      review: 1
+      debug: 1
+      total: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # 🔍 RESEARCHER - Knowledge Gap Resolver
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-researcher
+    role: researcher
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 3000
+      mode: "ultra"
+    system_prompt: |
+      You are the EAF Researcher. Resolve knowledge gaps with caveman reasoning:
+      
+      CAVEMAN RESEARCH PROTOCOL:
+      1. GAP → QUESTION - Transform every UNKNOWN into a specific, targeted question
+      2. SOURCE PRIORITY - 1) Repo code 2) Official docs 3) Source code 4) Standards 5) Maintainer 6) Quality refs 7) Community (last)
+      3. CITE OR IT DIDN'T HAPPEN - Every fact needs file:line or doc:url
+      4. CROSS-VALIDATE - Compare external findings against actual codebase
+      5. LEDGER ENTRY - Record: CONFIRMED/VERIFIED/INFERRED/UNKNOWN with confidence
+      
+      Output ResearchResult per gap:
+      - question, repo_evidence, external_evidence, authoritative_sources
+      - current_version, recommended_approach, alternatives, risks, unknowns, confidence
+    tools:
+      - search_codebase
+      - search_web
+      - read_url_content
+      - read_official_docs
+      - read_source_code
+      - cross_validate
+      - write_findings
+      - find_by_name
+      - grep_search
+      - view_file
+    permissions:
+      read: ["*"]
+      write: [".agy/research/*"]
+      execute: ["web_search"]
+      network: ["*"]
+    budget:
+      research: 3
+      review: 0
+      debug: 0
+      total: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # 💻 IMPLEMENTER - Code Producer
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-implementer
+    role: implementer
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 4000
+      mode: "ultra"
+    system_prompt: |
+      You are the EAF Implementer. Write minimal, correct code with caveman reasoning:
+      
+      CAVEMAN IMPLEMENTATION PROTOCOL:
+      1. PRESERVE ARCHITECTURE - Never change structure unless plan says so
+      2. MINIMAL CHANGE - Touch only files in plan, reuse existing abstractions
+      3. NO HARDCODE - Every value from config/constant with source reference
+      4. WHY EVERY LINE - Comment or commit msg explains WHY this change
+      5. DON'T BREAK - Don't remove behavior, don't weaken tests, don't fake services
+      
+      For each file changed, output:
+      - file_path, change_type, why_this_change, evidence_ref
+      - diff preview before applying
+    tools:
+      - read_file
+      - write_file
+      - edit_file
+      - replace_file_content
+      - run_build
+      - run_tests
+      - run_lint
+      - run_command
+    permissions:
+      read: ["*"]
+      write: ["src/**/*", "tests/**/*", "*.md", "*.rs", "*.ts", "*.py", "*.go", "*.c", "*.h"]
+      execute: ["npm test", "npm run build", "cargo test", "cargo build", "make", "pytest"]
+    budget:
+      research: 0
+      review: 1
+      debug: 3
+      total: 4
+
+  # ─────────────────────────────────────────────────────────────
+  # 🐞 DEBUGGER - Root Cause Analyst
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-debugger
+    role: debugger
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 5000
+      mode: "ultra"
+    system_prompt: |
+      You are the EAF Debugger. Root cause analysis with caveman reasoning:
+      
+      CAVEMAN DEBUG PROTOCOL (MANDATORY LOOP):
+      TEST FAILURE → CLASSIFY → REPRODUCE → LOCATE ROOT CAUSE → FORM HYPOTHESIS → PATCH → RETEST
+      
+      For EVERY failure, produce DebugRecord:
+      - Observed failure (exact error, stack trace, conditions)
+      - Expected behavior (from spec/test)
+      - Actual behavior (what happened)
+      - Root cause (specific line, condition, assumption)
+      - Evidence (logs, traces, memory dumps, register values)
+      - Fix (minimal patch)
+      - Why this fixes root cause (causal chain)
+      - Verification (test that now passes + regression check)
+      
+      Classification: LOGIC | CONCURRENCY | RESOURCE | PERFORMANCE | COMPATIBILITY | ENVIRONMENT
+    tools:
+      - read_logs
+      - run_test
+      - trace_execution
+      - inspect_memory
+      - read_registers
+      - apply_patch
+      - verify_fix
+      - replace_file_content
+      - run_command
+      - view_file
+      - grep_search
+    permissions:
+      read: ["*"]
+      write: ["src/**/*", "tests/**/*"]
+      execute: ["npm test", "cargo test", "gdb", "lldb", "perf", "pytest"]
+    budget:
+      research: 0
+      review: 0
+      debug: 5
+      total: 5
+
+  # ─────────────────────────────────────────────────────────────
+  # 🧪 TESTER - Validation Engineer
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-tester
+    role: tester
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 3000
+      mode: "ultra"
+    system_prompt: |
+      You are the EAF Tester. Multi-level validation with caveman reasoning:
+      
+      CAVEMAN TEST PROTOCOL:
+      1. SELECT LEVELS - Match validation to change type (see matrix below)
+      2. DETERMINISTIC - Tests must be reproducible, no flakes
+      3. COVERAGE - Measure what matters, not just line count
+      4. REGRESSION - Every fix gets a regression test
+      
+      Validation Level Matrix:
+      - Format only: FORMAT
+      - Refactor: FORMAT, STATIC, BUILD, UNIT, REGRESSION
+      - New feature (internal): FORMAT, STATIC, BUILD, UNIT, INTEGRATION, REGRESSION
+      - External API: FORMAT, STATIC, BUILD, UNIT, INTEGRATION, E2E, REGRESSION
+      - Security: FORMAT, STATIC, BUILD, UNIT, INTEGRATION, SECURITY_SCAN, REGRESSION
+      - Kernel/driver: FORMAT, STATIC, BUILD, UNIT, INTEGRATION, QEMU, KERNEL_TESTS, REGRESSION
+    tools:
+      - run_format
+      - run_static_analysis
+      - run_build
+      - run_unit_tests
+      - run_integration_tests
+      - run_e2e_tests
+      - run_security_scan
+      - run_qemu
+      - run_kernel_tests
+      - measure_coverage
+      - write_file
+      - run_command
+    permissions:
+      read: ["*"]
+      write: ["tests/**/*", "spec/**/*"]
+      execute: ["npm test", "cargo test", "cargo clippy", "cargo fmt", "qemu", "kvm", "pytest", "jest"]
+    budget:
+      research: 0
+      review: 1
+      debug: 1
+      total: 2
+
+  # ─────────────────────────────────────────────────────────────
+  # 🛡️ REVIEWER - Adversarial Auditor
+  # ─────────────────────────────────────────────────────────────
+  - name: eaf-reviewer
+    role: reviewer
+    model: claude-4-5-sonnet
+    thinking:
+      enabled: true
+      budget_tokens: 4000
+      mode: "ultra"
+    system_prompt: |
+      You are the EAF Reviewer. Adversarial audit with REJECT power and caveman reasoning:
+      
+      CAVEMAN REVIEW PROTOCOL:
+      1. ASSUME BROKEN - Actively try to break the implementation
+      2. 13 CATEGORIES - Every category must be checked:
+         CORRECTNESS, ARCHITECTURE, EDGE_CASES, ERROR_HANDLING, CONCURRENCY,
+         SECURITY, PERFORMANCE, RESOURCE_MGMT, COMPATIBILITY, TEST_COVERAGE,
+         MAINTAINABILITY, HARDCODING, REGRESSION
+      3. REJECT ON ANY CRITICAL/HIGH - Even if all tests pass
+      4. LEDGER CHECK - All assumptions validated? All decisions have rationale?
+      5. HARDCODE AUDIT - Zero unjustified magic values
+      
+      Output: APPROVE or REJECT with specific findings per category
+    tools:
+      - read_diff
+      - static_analysis
+      - security_scan
+      - performance_profile
+      - check_assumptions
+      - check_decisions
+      - audit_hardcoding
+      - verify_regression_tests
+      - view_file
+      - grep_search
+      - run_command
+    permissions:
+      read: ["*"]
+      write: [".agy/review/*"]
+      execute: ["npm run lint", "cargo clippy", "sonar", "bandit", "semgrep"]
+      reject: true
+    budget:
+      research: 0
+      review: 2
+      debug: 0
+      total: 2
+
+# ─────────────────────────────────────────────────────────────
+# ORCHESTRATION SETTINGS & MULTI-AGENT TRIGGERING
+# ─────────────────────────────────────────────────────────────
+orchestration:
+  max_concurrent_agents: 4
+  parallel_execution:
+    enabled: true
+    parallel_research: true
+    parallel_testing: true
+  gate_timeouts:
+    DISCOVERY: 60
+    RESEARCH: 300
+    ANALYSIS: 180
+    PLANNING: 180
+    IMPLEMENTATION: 600
+    VALIDATION: 300
+    DEBUGGING: 300
+    REVIEW: 300
+    COMPLETE: 60
+  rejection_transitions:
+    ANALYSIS: RESEARCH
+    PLANNING: RESEARCH
+    IMPLEMENTATION: PLANNING
+    VALIDATION: DEBUGGING
+    DEBUGGING: DEBUGGING
+    REVIEW: IMPLEMENTATION
+
+  # Task archetype subagent routes
+  task_routes:
+    BUG:
+      - eaf-debugger
+      - eaf-tester
+      - eaf-reviewer
+    FEATURE_INTERNAL:
+      - eaf-architect
+      - eaf-implementer
+      - eaf-tester
+      - eaf-reviewer
+    FEATURE_EXTERNAL:
+      - eaf-researcher
+      - eaf-architect
+      - eaf-implementer
+      - eaf-tester
+      - eaf-reviewer
+    REFACTOR:
+      - eaf-architect
+      - eaf-implementer
+      - eaf-tester
+      - eaf-reviewer
+    PERFORMANCE:
+      - eaf-researcher
+      - eaf-architect
+      - eaf-implementer
+      - eaf-tester
+      - eaf-debugger
+      - eaf-reviewer
+    SECURITY:
+      - eaf-researcher
+      - eaf-architect
+      - eaf-reviewer
+      - eaf-implementer
+      - eaf-tester
+      - eaf-reviewer
+    ARCHITECTURE_CHANGE:
+      - eaf-researcher
+      - eaf-architect
+      - eaf-reviewer
+      - eaf-implementer
+      - eaf-tester
+      - eaf-debugger
+      - eaf-reviewer
+    KERNEL_DRIVER:
+      - eaf-researcher
+      - eaf-architect
+      - eaf-reviewer
+      - eaf-implementer
+      - eaf-tester
+      - eaf-debugger
+      - eaf-reviewer
+
+# Shared caveman reasoning config for ALL agents
+shared_reasoning:
+  caveman_mode: true
+  knowledge_states: ["CONFIRMED", "VERIFIED", "INFERRED", "UNKNOWN"]
+  high_impact_unknown_blocks: true
+  evidence_required: true
+  decision_ledger_required: true
+  assumption_ledger_required: true
+  hardcoding_audit: true
+  adversarial_review: true
+
+# ─────────────────────────────────────────────────────────────
+# ⚡ DYNAMIC CAVEMAN BUDGET SYSTEM (Low Token, High Work)
+# ─────────────────────────────────────────────────────────────
+dynamic_budget:
+  enabled: true
+  caveman_efficiency:
+    telegraphic_transmission: true    # Zero fluff, dense facts, max work per token
+    context_sliding_window: true       # Minimal scoped diffs, no full repo dumps
+    fast_path_bailouts: true           # 0 gaps → skip research; 0 test errors → skip debug
+    elastic_surplus_carryover: true    # Unused upstream rounds become downstream credits
+  
+  complexity_tiers:
+    MINIMAL:
+      archetypes: ["DOCUMENTATION", "BUILD_CI", "FORMAT_ONLY"]
+      research_budget: 1
+      review_budget: 1
+      debug_budget: 2
+      total_budget: 4
+      thinking_tokens: 1500
+      max_output_tokens: 500
+    STANDARD:
+      archetypes: ["BUG", "FEATURE_INTERNAL", "REFACTOR", "TEST"]
+      research_budget: 2
+      review_budget: 2
+      debug_budget: 3
+      total_budget: 7
+      thinking_tokens: 3000
+      max_output_tokens: 1000
+    COMPLEX:
+      archetypes: ["FEATURE_EXTERNAL", "PERFORMANCE", "ARCHITECTURE_CHANGE"]
+      research_budget: 3
+      review_budget: 2
+      debug_budget: 5
+      total_budget: 10
+      thinking_tokens: 4000
+      max_output_tokens: 1500
+    EXTREME:
+      archetypes: ["KERNEL_DRIVER", "SECURITY"]
+      research_budget: 4
+      review_budget: 3
+      debug_budget: 6
+      total_budget: 13
+      thinking_tokens: 5000
+      max_output_tokens: 2000

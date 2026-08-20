@@ -195,8 +195,10 @@ export function verifyGates(phase: string, context: TaskContext): { passed: bool
   };
 }
 
+import { computeTaskComplexity, COMPLEXITY_BUDGET_TIERS, type TaskComplexityTier } from '../state-machine/budget.js';
+
 /**
- * Budget limits per AGENTS.md
+ * Budget limits per AGENTS.md default baseline
  */
 export const DEFAULT_BUDGET = {
   research: 3,
@@ -206,26 +208,38 @@ export const DEFAULT_BUDGET = {
 } as const;
 
 /**
- * Checks if budget allows continuing in a phase
+ * Checks if budget allows continuing in a phase with Dynamic Caveman Budgeting
  */
-export function checkBudget(context: TaskContext, phase: string): { allowed: boolean; reason?: string } {
+export function checkBudget(
+  context: TaskContext,
+  phase: string,
+  tierOverride?: TaskComplexityTier
+): { allowed: boolean; reason?: string; tier: TaskComplexityTier } {
+  const tier: TaskComplexityTier = tierOverride ?? computeTaskComplexity(
+    context.taskType ?? 'FEATURE_INTERNAL',
+    context.knowledgeGapsIdentified ? (context.researchResults?.length ?? 0) : 0,
+    context.relevantFiles?.length ?? 0
+  );
+
+  const budgetLimits = COMPLEXITY_BUDGET_TIERS[tier] ?? DEFAULT_BUDGET;
+
   switch (phase) {
     case 'RESEARCH':
-      if (context.researchRoundsUsed >= DEFAULT_BUDGET.research) {
-        return { allowed: false, reason: `Research budget exhausted (${DEFAULT_BUDGET.research} rounds)` };
+      if (context.researchRoundsUsed >= budgetLimits.research) {
+        return { allowed: false, reason: `Research budget exhausted (${context.researchRoundsUsed}/${budgetLimits.research} rounds for tier ${tier})`, tier };
       }
-      return { allowed: true };
+      return { allowed: true, tier };
     case 'REVIEW':
-      if (context.reviewRoundsUsed >= DEFAULT_BUDGET.review) {
-        return { allowed: false, reason: `Review budget exhausted (${DEFAULT_BUDGET.review} rounds)` };
+      if (context.reviewRoundsUsed >= budgetLimits.review) {
+        return { allowed: false, reason: `Review budget exhausted (${context.reviewRoundsUsed}/${budgetLimits.review} rounds for tier ${tier})`, tier };
       }
-      return { allowed: true };
+      return { allowed: true, tier };
     case 'DEBUGGING':
-      if (context.debugIterationsUsed >= DEFAULT_BUDGET.debug) {
-        return { allowed: false, reason: `Debug budget exhausted (${DEFAULT_BUDGET.debug} iterations)` };
+      if (context.debugIterationsUsed >= budgetLimits.debug) {
+        return { allowed: false, reason: `Debug budget exhausted (${context.debugIterationsUsed}/${budgetLimits.debug} iterations for tier ${tier})`, tier };
       }
-      return { allowed: true };
+      return { allowed: true, tier };
     default:
-      return { allowed: true };
+      return { allowed: true, tier };
   }
 }
