@@ -1,23 +1,40 @@
+---
+name: architecture
+version: "1.0.0"
+description: "Design gates, data flow, dependency analysis, compatibility"
+triggers: ["architecture", "design", "architect", "system"]
+target_agents: ["architect", "orchestrator", "reviewer"]
+---
+
 # Architecture Skill
 
 ## Purpose
-This skill provides guidance for system architecture design, review, and decision-making in microkernel development.
+This skill provides guidance for system architecture design, component blueprints, data and control flow definitions, and maintenance of the Decision Ledger.
 
-## Key Rules from Architecture Proposal
-- **Isolation First**: Design for strong isolation boundaries (CR3, capability-based) from the start
-- **Explicit Contracts**: Define clear interfaces with explicit pre/post conditions and invariants
-- **Minimal TCB**: Keep the trusted computing base as small as possible
-- **Composability**: Favor composition over inheritance; components should be independently testable
-- **Failure Containment**: Design failure domains that prevent cascading failures
+## Core Principles & Protocols
+- **Isolation & Boundary Design**: Design clear modular boundaries, failure domains, and interface contracts.
+- **Explicit Contracts**: Define interfaces with explicit preconditions, postconditions, and invariants.
+- **Minimal Complexity & TCB**: Minimize dependencies, complexity, and attack surface.
+- **Decision Ledger**: Every architecture decision must record:
+  - Question being decided
+  - Options considered (A, B, C)
+  - Selected option
+  - Evidence-based rationale
+  - Tradeoffs acknowledged
+- **Architecture Gate**: Architecture plan must be `APPROVED` before implementation starts.
 
 ## Trigger Conditions
-- Designing new kernel subsystems or IPC mechanisms
-- Reviewing architectural changes to memory management, scheduling, or capabilities
-- Evaluating trade-offs between performance and isolation
-- Planning capability system extensions
+- Designing new subsystems, modules, or network/IPC protocols
+- Planning major refactors, migration strategies, or schema migrations
+- Evaluating trade-offs between performance, scalability, and maintainability
+- Establishing interface boundaries and domain models
 
 ## Expected Outputs
-- Architecture decision records (ADRs)
-- Component interface specifications
-- Threat models and security analyses
-- Performance isolation guarantees
+- `ArchitecturePlan` containing:
+  - Goal and Current Architecture
+  - Affected Components
+  - Data Flow & Control Flow diagrams
+  - Implementation Strategy & Alternatives
+  - Failure Modes & Mitigations
+  - Testing Strategy
+- Decision Ledger entries (`DECISION D001...`)

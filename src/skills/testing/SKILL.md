@@ -1,23 +1,35 @@
+---
+name: testing
+version: "1.0.0"
+description: "Six validation levels with project-appropriate selection"
+triggers: ["test", "validate", "verify", "check"]
+target_agents: ["tester", "validator", "orchestrator"]
+---
+
 # Testing Skill
 
 ## Purpose
-This skill defines testing strategies for kernel correctness including unit, integration, property-based, and fault injection testing.
+This skill defines multi-level validation strategies, test design best practices, and deterministic test execution for software quality assurance.
 
-## Key Rules from Architecture Proposal
-- **Test at the Boundary**: Focus on syscall interfaces, IPC boundaries, and capability transitions
-- **Property-Based by Default**: Use model checking and property-based testing for stateful subsystems
-- **Fault Injection Mandatory**: Test every error path with injected failures (OOM, disk errors, signal storms)
-- **Deterministic Replay**: All tests must be replayable with fixed seeds; no flaky tests
-- **Coverage with Intent**: Measure branch coverage on error paths, not just happy paths
+## Core Principles & Protocols
+- **Validation Levels**:
+  ```
+  FORMAT → STATIC ANALYSIS → BUILD → UNIT TEST → INTEGRATION TEST → E2E TEST → REGRESSION TEST
+  ```
+- **Testing by Change Type**:
+  - *Refactor*: Format, Static, Build, Unit, Regression
+  - *New Feature*: Format, Static, Build, Unit, Integration, Regression
+  - *External API*: Format, Static, Build, Unit, Integration, E2E, Regression
+  - *Security Fix*: Format, Static, Build, Unit, Integration, Security Scan, Regression
+- **Deterministic & Isolated**: Tests must not depend on execution order, network availability (mocked), or global mutable state.
+- **Boundary & Negative Testing**: Test null values, empty collections, maximum boundaries, invalid inputs, and simulated failure modes.
 
 ## Trigger Conditions
-- Adding new syscalls, IPC protocols, or capability operations
-- Modifying scheduler, memory manager, or VFS
-- Implementing checkpoint/restore or COW
-- Validating security properties (isolation, non-interference)
+- Adding tests for new features or bug reproductions
+- Running validation gates following implementation
+- Checking regression across existing test suites
 
 ## Expected Outputs
-- Test suites with property-based generators
-- Fault injection harnesses
-- CI pipeline integration
-- Formal verification artifacts where applicable
+- Comprehensive unit and integration test suites
+- Test execution reports with coverage metrics
+- Regression test cases covering reported bugs
