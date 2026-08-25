@@ -4,6 +4,31 @@ When the user starts a request with `/EAF` or asks for Enterprise Agent Framewor
 
 ---
 
+## 0. MECHANICAL DELEGATION (MANDATORY - TRY THIS FIRST)
+
+You are FORBIDDEN from implementing the task yourself when the `agy` CLI is available.
+The host model MUST NOT play all agent roles in one context - that is single-agent
+mode, which produces fabricated gates and mock code.
+
+On `/EAF <task>`:
+1. Run the mechanical orchestrator via your shell tool:
+   ```
+   npx agy eaf "<task description>" --skills engineering,research,architecture,implementation,testing,debugging,review
+   ```
+   (or `node <path-to-agy-cli>/dist/cli.js eaf "<task>"` if agy is not globally installed)
+2. The orchestrator spawns REAL isolated subagents (researcher → architect →
+   implementer → validator → debugger → reviewer), each grounded in actual file
+   contents, each verified against real compiler/test output.
+3. Treat the printed FinalVerification as AUTHORITATIVE:
+   - All gates PASSED + signOff approved → report success to the user.
+   - Any FAILED gate / exit code 1 → report failure honestly. NEVER claim success.
+4. Your own role afterwards: summarize the verification output for the user.
+   Do NOT re-implement, do NOT override gate results.
+
+Fall back to in-context role-play ONLY if the command fails because `agy` is not installed.
+
+---
+
 ## 1. Task Classification & Agent Assignment
 Classify the task into one of the standard archetypes and assign the agent pipeline:
 - **BUG**: `CODEBASE` → `DEBUGGER` → `TESTER` → `REVIEWER`

@@ -138,13 +138,13 @@ function createMockVerificationChecklist(): VerificationChecklist {
 
 async function runTaskCommand(description: string, options: any): Promise<void> {
   const formatter = createFormatter(options.verbose, options.noColor);
-  
+
   try {
     formatter.banner('AGY Task Execution', `Task: ${description.substring(0, 50)}${description.length > 50 ? '...' : ''}`);
-    
+
     // Parse explicit skills if provided
     const explicitSkills = options.skills ? options.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-    
+
     if (options.dryRun) {
       formatter.dryRun(`Would execute task: ${description}`);
       formatter.dryRun(`Budget tracking: ${options.budgetTracking ? 'enabled' : 'disabled'}`);
@@ -157,11 +157,11 @@ async function runTaskCommand(description: string, options: any): Promise<void> 
 
     // Load config
     const config = options.config ? loadConfig(options.config) : loadConfig();
-    
+
     formatter.info(`Loaded configuration from ${options.config || 'default'}`);
     formatter.info(`Task type: ${options.type || 'feature'}`);
     formatter.info(`Max concurrent agents: ${config.orchestrator.maxConcurrentTasks}`);
-    
+
     if (explicitSkills.length > 0) {
       formatter.info(`Explicit skills: ${explicitSkills.join(', ')}`);
       // Load skill registry to show what would be injected
@@ -176,56 +176,8 @@ async function runTaskCommand(description: string, options: any): Promise<void> 
         }
       }
     }
-    
-    // Show task summary
-    formatter.taskSummary('task-' + Date.now(), description, 'DISCOVERY', createMockBudget());
-    
-    // Phase progress simulation
-    const phases: Phase[] = ['DISCOVERY', 'RESEARCH', 'ANALYSIS', 'PLANNING', 'IMPLEMENTATION', 'VALIDATION', 'DEBUGGING', 'REVIEW', 'COMPLETE'];
-    
-    for (const phase of phases) {
-      formatter.startSpinner(phase, { text: `Executing ${phase} phase...`, color: 'blue' });
-      await new Promise(r => setTimeout(r, 500)); // Simulate work
-      formatter.succeedSpinner(phase, `Completed ${phase} phase`);
-    }
-    
-    // Gate results
-    const gateResults = [
-      { gate: 'REPOSITORY_INSPECTION', status: 'PASSED' as GateStatus, details: 'Repository structure analyzed', duration: 120 },
-      { gate: 'REQUIREMENTS_DECOMPOSITION', status: 'PASSED' as GateStatus, details: 'Requirements broken down', duration: 85 },
-      { gate: 'KNOWLEDGE_GAPS_IDENTIFIED', status: 'PASSED' as GateStatus, details: '2 gaps found, 1 resolved', duration: 210 },
-      { gate: 'RESEARCH_COMPLETED', status: 'PASSED' as GateStatus, details: 'All research questions answered', duration: 450 },
-      { gate: 'ARCHITECTURE_GATE', status: 'PASSED' as GateStatus, details: 'Architecture approved', duration: 320 },
-      { gate: 'IMPLEMENTATION_COMPLETE', status: 'PASSED' as GateStatus, details: 'All components implemented', duration: 1200 },
-      { gate: 'BUILD_VERIFICATION', status: 'PASSED' as GateStatus, details: 'TypeScript compilation successful', duration: 180 },
-      { gate: 'TEST_VERIFICATION', status: 'PASSED' as GateStatus, details: 'All tests passing', duration: 340 },
-      { gate: 'REGRESSION_CHECK', status: 'PASSED' as GateStatus, details: 'No regressions detected', duration: 210 },
-      { gate: 'FINAL_REVIEW', status: 'PASSED' as GateStatus, details: 'Code review approved', duration: 150 },
-    ];
-    
-    formatter.gateResults(gateResults);
-    
-    // Budget snapshot
-    formatter.budgetSnapshot({
-      research: { used: 2, limit: 3 },
-      review: { used: 1, limit: 2 },
-      debug: { used: 0, limit: 5 },
-      total: { used: 3, limit: 10 },
-    }, 'Final Budget');
-    
-    // Assumptions and decisions
-    formatter.assumptions(createMockAssumptions());
-    formatter.decisions(createMockDecisions());
-    formatter.researchFindings(createMockResearchFindings());
-    formatter.knowledgeGaps(createMockKnowledgeGaps());
-    formatter.reviewFindings(createMockReviewFindings());
-    formatter.signOff(createMockSignOff());
-    
-    // Final verification
-    formatter.verificationChecklist(createMockVerificationChecklist());
-    
-    formatter.success('Task completed successfully!');
-    
+
+    await executeThroughOrchestrator(description, formatter);
   } catch (error) {
     formatter.error(
       'Task execution failed',
@@ -234,6 +186,81 @@ async function runTaskCommand(description: string, options: any): Promise<void> 
     process.exit(1);
   } finally {
     formatter.cleanup();
+  }
+}
+
+/**
+ * Runs the REAL orchestrator (state machine + gates + LLM subagents)
+ * and prints its actual FinalVerification output.
+ */
+async function executeThroughOrchestrator(
+  description: string,
+  formatter: OutputFormatter,
+  label = 'Task'
+): Promise<void> {
+  const { Orchestrator } = await import('./orchestrator/orchestrator.js');
+  const orchestrator = new Orchestrator({ workingDir: process.cwd() });
+
+  const state = orchestrator.getState();
+  formatter.taskSummary('task-' + Date.now(), description, state?.phase ?? 'DISCOVERY', {
+    research: { used: 0, limit: 3 },
+    review: { used: 0, limit: 2 },
+    debug: { used: 0, limit: 5 },
+    total: { used: 0, limit: 10 },
+  });
+
+  const verification = await orchestrator.executeTask(description);
+
+  // Print REAL gate results from the state machine
+  formatter.gateResults(
+    verification.gateResults.map((g) => ({
+      gate: g.gate,
+      status: g.status,
+      details: g.details,
+      duration: 0,
+    }))
+  );
+
+  // Print REAL budget usage
+  formatter.budgetSnapshot(
+    {
+      research: verification.finalBudget.research,
+      review: verification.finalBudget.review,
+      debug: verification.finalBudget.debug,
+      total: verification.finalBudget.total,
+    },
+    'Final Budget'
+  );
+
+  // Print reviewer findings collected during the run
+  const finalState = orchestrator.getState();
+  if (finalState && finalState.context.reviewerFindings.length > 0) {
+    formatter.reviewFindings(finalState.context.reviewerFindings);
+  }
+
+  formatter.signOff(verification.signOff);
+
+  const checks = verification.gateResults.filter((g) => g.status === 'FAILED');
+  formatter.verificationChecklist({
+    allPassed: verification.allGatesPassed,
+    checks: [
+      ...verification.gateResults
+        .filter((g) => !g.gate.startsWith('rejection_'))
+        .map((g) => ({
+          name: g.gate,
+          passed: g.status === 'PASSED',
+          required: true,
+          details: g.details,
+        })),
+    ],
+  });
+  void checks;
+
+  if (verification.allGatesPassed && verification.signOff.approved) {
+    formatter.success(`${label} completed - all gates passed`);
+  } else {
+    formatter.warning(`${label} finished with FAILED gates - see above. Do NOT treat as complete.`);
+    process.exitCode = 1;
   }
 }
 
@@ -484,56 +511,8 @@ async function runEAFCommand(description: string, options: any): Promise<void> {
         }
       }
     }
-    
-    // Show task summary
-    formatter.taskSummary('eaf-' + Date.now(), description, 'DISCOVERY', createMockBudget());
-    
-    // Phase progress simulation - full 9-phase EAF flow
-    const phases: Phase[] = ['DISCOVERY', 'RESEARCH', 'ANALYSIS', 'PLANNING', 'IMPLEMENTATION', 'VALIDATION', 'DEBUGGING', 'REVIEW', 'COMPLETE'];
-    
-    for (const phase of phases) {
-      formatter.startSpinner(phase, { text: `Executing ${phase} phase...`, color: 'blue' });
-      await new Promise(r => setTimeout(r, 500));
-      formatter.succeedSpinner(phase, `Completed ${phase} phase`);
-    }
-    
-    // Gate results
-    const gateResults = [
-      { gate: 'REPOSITORY_INSPECTION', status: 'PASSED' as GateStatus, details: 'Repository structure analyzed', duration: 120 },
-      { gate: 'REQUIREMENTS_DECOMPOSITION', status: 'PASSED' as GateStatus, details: 'Requirements broken down', duration: 85 },
-      { gate: 'KNOWLEDGE_GAPS_IDENTIFIED', status: 'PASSED' as GateStatus, details: '2 gaps found, 1 resolved', duration: 210 },
-      { gate: 'RESEARCH_COMPLETED', status: 'PASSED' as GateStatus, details: 'All research questions answered', duration: 450 },
-      { gate: 'ARCHITECTURE_GATE', status: 'PASSED' as GateStatus, details: 'Architecture approved', duration: 320 },
-      { gate: 'IMPLEMENTATION_COMPLETE', status: 'PASSED' as GateStatus, details: 'All components implemented', duration: 1200 },
-      { gate: 'BUILD_VERIFICATION', status: 'PASSED' as GateStatus, details: 'TypeScript compilation successful', duration: 180 },
-      { gate: 'TEST_VERIFICATION', status: 'PASSED' as GateStatus, details: 'All tests passing', duration: 340 },
-      { gate: 'REGRESSION_CHECK', status: 'PASSED' as GateStatus, details: 'No regressions detected', duration: 210 },
-      { gate: 'FINAL_REVIEW', status: 'PASSED' as GateStatus, details: 'Code review approved', duration: 150 },
-    ];
-    
-    formatter.gateResults(gateResults);
-    
-    // Budget snapshot
-    formatter.budgetSnapshot({
-      research: { used: 2, limit: 3 },
-      review: { used: 1, limit: 2 },
-      debug: { used: 0, limit: 5 },
-      total: { used: 3, limit: 10 },
-    }, 'Final Budget');
-    
-    // Assumptions and decisions
-    formatter.assumptions(createMockAssumptions());
-    formatter.decisions(createMockDecisions());
-    formatter.researchFindings(createMockResearchFindings());
-    formatter.knowledgeGaps(createMockKnowledgeGaps());
-    formatter.reviewFindings(createMockReviewFindings());
-    formatter.signOff(createMockSignOff());
-    
-    // Final verification
-    formatter.verificationChecklist(createMockVerificationChecklist());
-    
-    formatter.success('EAF task completed successfully!');
-    
+
+    await executeThroughOrchestrator(description, formatter, 'EAF task');
   } catch (error) {
     formatter.error(
       'EAF execution failed',

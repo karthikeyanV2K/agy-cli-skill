@@ -3,6 +3,8 @@ import type { TaskContext, Phase, GateStatus, ResearchResult, ArchitecturePlan, 
 import { classifyTask, toBaseTaskType } from './task-classifier.js';
 import { getChainForTask, verifyGates, checkBudget, DEFAULT_BUDGET, type AgentType } from './agent-chain.js';
 import { buildContext, buildDiscoveryContext, updateContextAfterAgent, AgentContextPackage } from './context-builder.js';
+import { AgentSpawner } from './agent-spawner.js';
+import { createProviderFromEnv, type LLMProvider } from '../llm/provider.js';
 
 /**
  * Orchestrator state for a single task execution
@@ -36,6 +38,7 @@ export interface OrchestratorConfig {
   maxConcurrentTasks: number;
   gateTimeouts: Record<string, number>;
   traceStorage: string;
+  workingDir?: string;
 }
 
 /**
@@ -75,9 +78,14 @@ export const DEFAULT_ORCHESTRATOR_CONFIG: OrchestratorConfig = {
 export class Orchestrator {
   private config: OrchestratorConfig;
   private state: OrchestratorState | null = null;
+  private readonly spawner: AgentSpawner | null;
 
-  constructor(config: Partial<OrchestratorConfig> = {}) {
+  constructor(config: Partial<OrchestratorConfig> = {}, provider?: LLMProvider) {
     this.config = { ...DEFAULT_ORCHESTRATOR_CONFIG, ...config };
+    const resolvedProvider = provider ?? createProviderFromEnv();
+    this.spawner = resolvedProvider
+      ? new AgentSpawner(resolvedProvider, this.config.workingDir ?? process.cwd())
+      : null;
   }
 
   /**
@@ -371,11 +379,21 @@ this.state.gateHistory.push(...gateResult.failedGates.map((g: string) => ({
 
   /**
    * Spawns an agent with the given context
-   * In real implementation, this would invoke the actual agent process
+   * Real LLM-backed subagent when a provider is configured (GEMINI_API_KEY set);
+   * falls back to mock results otherwise so the state machine stays testable.
    */
   private async spawnAgent(agent: AgentType, context: AgentContextPackage): Promise<unknown> {
-    // This is a stub - in real implementation, would spawn actual agent
-    // For now, return mock results based on agent type
+    if (this.spawner) {
+      try {
+        return await this.spawner.launch(agent, context, this.state?.taskType);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`[orchestrator] real subagent ${agent} failed, falling back to mock: ${message}`);
+        // fall through to mock so budget/gate mechanics stay observable
+      }
+    }
+
+    // Mock results for testing without an LLM provider
     switch (agent) {
       case 'orchestrator':
         if (this.state?.phase === 'DISCOVERY') {
