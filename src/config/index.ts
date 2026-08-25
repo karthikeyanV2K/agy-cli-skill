@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -209,5 +209,11 @@ export function getDefaultConfig(): Config {
 export function saveConfig(config: Config, outputPath?: string): void {
   const path = outputPath ?? join(process.cwd(), '.agyrc');
   const yamlStr = yaml.dump(config, { indent: 2, lineWidth: 120 });
-  import('node:fs').then(fs => fs.writeFileSync(path, yamlStr, 'utf-8'));
+  try {
+    writeFileSync(path, yamlStr, 'utf-8');
+  } catch (error) {
+    throw new Error(
+      `Failed to save config to ${path}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 }

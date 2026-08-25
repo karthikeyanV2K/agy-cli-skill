@@ -1,88 +1,122 @@
 # AGY CLI Configuration Example
 # Copy this file to .agyrc and customize for your environment
+# NOTE: This file must match the zod ConfigSchema in src/config/index.ts
+
+version: "0.1.0"
 
 orchestrator:
   # Model to use for orchestration (supports any Oz-compatible model)
   # Available Gemini models: gemini-2.5-flash-lite, gemini-3-flash, gemini-3.1-pro,
   # gemini-3.5-flash, gemini-3.6-flash, gemini-3.7-flash
   model: "gemini-3.5-flash"
+
   # Maximum concurrent child agents
-  max_concurrent_agents: 4
-  # Research budget - prevents infinite research loops
-  research_budget:
-    max_rounds: 3
-  # Review budget - limits review iterations
-  review_budget:
-    max_rounds: 2
-  # Debug budget - limits fix iterations
-  debug_budget:
-    max_iterations: 5
+  maxConcurrentTasks: 4
 
-# Agent permission model - controls what each agent can do
-agents:
-  researcher:
-    permissions: [read, search, execute]
-    # model: "gemini-3.7-flash"        # Override model per-agent (optional)
-    description: "Investigates knowledge gaps, queries authoritative sources"
-  architect:
-    permissions: [read, search, plan]
-    # model: "gemini-3.1-pro"           # Override model per-agent (optional)
-    description: "Designs architecture, creates implementation plans"
-  implementer:
-    permissions: [read, write, execute]
-    # model: "gemini-3.5-flash"         # Override model per-agent (optional)
-    description: "Writes code, executes builds and tests"
-  tester:
-    permissions: [read, write:tests, execute]
-    # model: "gemini-2.5-flash-lite"    # Override model per-agent (optional)
-    description: "Runs validation suite, writes test cases"
-  reviewer:
-    permissions: [read, search, execute, reject]
-    # model: "gemini-3.6-flash"         # Override model per-agent (optional)
-    description: "Adversarial review, can REJECT implementation"
-  debugger:
-    permissions: [read, write, execute]
-    # model: "gemini-3.7-flash"         # Override model per-agent (optional)
-    description: "Root cause analysis, applies fixes"
+  # Default budget - prevents infinite research/review/debug loops
+  defaultBudget:
+    research: 3
+    review: 2
+    debug: 5
+    total: 10
 
-# Enabled skills (all enabled by default)
-skills:
-  - engineering
-  - research
-  - architecture
-  - implementation
-  - debugging
-  - testing
-  - review
+  # Gate timeouts in milliseconds (key = phase name)
+  gateTimeouts:
+    DISCOVERY: 30000
+    RESEARCH: 120000
+    ANALYSIS: 60000
+    PLANNING: 60000
+    IMPLEMENTATION: 300000
+    VALIDATION: 120000
+    DEBUGGING: 300000
+    REVIEW: 120000
 
-# Execution settings
-execution:
-  # Default working directory (relative to project root)
-  working_directory: "."
-  # Timeout for individual agent operations (seconds)
-  agent_timeout: 300
-  # Enable verbose logging
-  verbose: false
-  # Save execution traces for debugging
-  save_traces: true
-  traces_directory: ".agy/traces"
+  # Agent permission model - controls what each agent can do.
+  # Each agent requires: type, name, permissions {read, write, execute, network, budget}
+  agents:
+    - type: orchestrator
+      name: main-orchestrator
+      model: "gemini-3.5-flash"        # Override model per-agent (optional)
+      temperature: 0.2                  # Optional (0-2)
+      maxTokens: 8192                   # Optional
+      permissions:
+        read: ["**/*"]
+        write: ["**/*"]
+        execute: ["*"]
+        network: ["*"]
+        budget: { research: 3, review: 2, debug: 5, total: 10 }
 
-# Git integration
-git:
-  # Auto-commit after successful task completion
-  auto_commit: false
-  # Commit message template
-  commit_template: "agy: {task_summary}\n\n{agent_summary}"
-  # Create PR after completion
-  create_pr: false
+    - type: researcher
+      name: researcher
+      description: "Investigates knowledge gaps, queries authoritative sources"
+      permissions:
+        read: ["**/*"]
+        write: []
+        execute: []
+        network: ["*"]
+        budget: { research: 3, review: 0, debug: 0, total: 3 }
 
-# Notification settings
-notifications:
-  # Webhook URL for completion notifications
-  webhook_url: ""
-  # Notify on task start
-  on_start: false
-  # Notify on task completion
-  on_complete: true
-  # Notify on failure
-  on_failure: true
+    - type: architect
+      name: architect
+      description: "Designs architecture, creates implementation plans"
+      permissions:
+        read: ["**/*"]
+        write: ["**/*.md", "**/docs/**"]
+        execute: []
+        network: []
+        budget: { research: 1, review: 1, debug: 1, total: 3 }
+
+    - type: implementer
+      name: implementer
+      description: "Writes code, executes builds and tests"
+      permissions:
+        read: ["**/*"]
+        write: ["src/**/*", "tests/**/*"]
+        execute: ["npm test", "npm run build", "npx tsc*"]
+        network: []
+        budget: { research: 0, review: 1, debug: 3, total: 4 }
+
+    - type: validator
+      name: validator
+      description: "Runs validation suite, writes test cases"
+      permissions:
+        read: ["**/*"]
+        write: []
+        execute: ["npm test", "npm run lint", "npx tsc --noEmit"]
+        network: []
+        budget: { research: 0, review: 1, debug: 1, total: 2 }
+
+    - type: debugger
+      name: debugger
+      description: "Root cause analysis, applies fixes"
+      permissions:
+        read: ["**/*"]
+        write: ["src/**/*", "tests/**/*"]
+        execute: ["npm test", "node --inspect*"]
+        network: []
+        budget: { research: 0, review: 0, debug: 5, total: 5 }
+
+    - type: reviewer
+      name: reviewer
+      description: "Adversarial review, can REJECT implementation"
+      permissions:
+        read: ["**/*"]
+        write: []
+        execute: []
+        network: []
+        budget: { research: 0, review: 2, debug: 0, total: 2 }
+
+# Enabled skills. Each entry requires name, version and permissions.
+# All skills disabled by default when omitted - enable explicitly:
+skills: []
+# Example enabled skill entry:
+# skills:
+#   - name: engineering
+#     version: "1.0.0"
+#     triggers: ["/eaf", "/engineering"]
+#     permissions:
+#       read: ["**/*"]
+#       write: []
+#       execute: []
+#       network: []
+#       budget: { research: 3, review: 2, debug: 5, total: 10 }

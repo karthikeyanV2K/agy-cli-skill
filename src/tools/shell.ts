@@ -76,8 +76,10 @@ export async function executeShell(
       if (!exited) {
         exited = true;
         clearTimeout(killTimer);
+        const failed = code !== 0;
         resolve({
-          success: true,
+          success: !failed,
+          error: failed ? `Command exited with code ${code ?? 'null'}` : undefined,
           data: {
             stdout,
             stderr,

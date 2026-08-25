@@ -144,7 +144,8 @@ export abstract class Agent {
    */
   protected consumeBudget(category: 'research' | 'review' | 'debug', amount: number): boolean {
     const budget = this.permissions.budget;
-    const remaining = budget[category] - (this.config as any).budgetUsed?.[category] || 0;
+    const used = (this.config as any).budgetUsed?.[category] ?? 0;
+    const remaining = budget[category] - used;
     
     if (remaining < amount) {
       return false;

@@ -90,16 +90,29 @@ export class Orchestrator {
     this.state = this.initializeState(description);
 
     try {
-      // Run through all phases
-      await this.runPhase('DISCOVERY');
-      await this.runPhase('RESEARCH');
-      await this.runPhase('ANALYSIS');
-      await this.runPhase('PLANNING');
-      await this.runPhase('IMPLEMENTATION');
-      await this.runPhase('VALIDATION');
-      await this.runPhase('DEBUGGING');
-      await this.runPhase('REVIEW');
-      await this.runPhase('COMPLETE');
+      const phaseSequence: Phase[] = [
+        'DISCOVERY',
+        'RESEARCH',
+        'ANALYSIS',
+        'PLANNING',
+        'IMPLEMENTATION',
+        'VALIDATION',
+        'DEBUGGING',
+        'REVIEW',
+        'COMPLETE',
+      ];
+
+      // Iterative phase loop - rejections move the cursor instead of recursing,
+      // so budget checks (not stack depth) terminate rejection loops cleanly
+      let index = 0;
+      while (index < phaseSequence.length) {
+        const outcome = await this.runPhase(phaseSequence[index]);
+        if (outcome.rejected && outcome.toPhase) {
+          index = phaseSequence.indexOf(outcome.toPhase);
+          continue;
+        }
+        index++;
+      }
 
       this.state.status = 'completed';
       this.state.endTime = new Date();
@@ -175,8 +188,9 @@ const taskContext: TaskContext = {
 
   /**
    * Runs a single phase with gate verification
+   * Returns the rejection target if gates fail, so executeTask's loop can retry iteratively
    */
-  private async runPhase(phase: Phase): Promise<void> {
+  private async runPhase(phase: Phase): Promise<{ rejected: boolean; toPhase?: Phase }> {
     if (!this.state) throw new Error('Orchestrator not initialized');
 
     // Verify gates before entering phase (except DISCOVERY)
@@ -192,8 +206,8 @@ this.state.gateHistory.push(...gateResult.failedGates.map((g: string) => ({
         // Handle rejection transitions
         const rejectionPhase = this.getRejectionTarget(phase);
         if (rejectionPhase) {
-          await this.handleRejection(phase, rejectionPhase, gateResult.failedGates);
-          return;
+          this.recordRejection(phase, rejectionPhase, gateResult.failedGates);
+          return { rejected: true, toPhase: rejectionPhase };
         }
         throw new Error(`Gate verification failed for phase ${phase}: ${gateResult.failedGates.join(', ')}`);
       }
@@ -221,6 +235,7 @@ this.state.gateHistory.push(...gateResult.failedGates.map((g: string) => ({
 
     // Spawn and run agents for this phase
     await this.runAgentsForPhase(phase);
+    return { rejected: false };
   }
 
   /**
@@ -242,9 +257,11 @@ this.state.gateHistory.push(...gateResult.failedGates.map((g: string) => ({
   }
 
   /**
-   * Handles rejection by transitioning to earlier phase
+   * Records a rejection (logs, increments budget counter, resets flags).
+   * Does NOT re-run phases - executeTask's loop handles the retry iteratively,
+   * so repeated rejections are terminated by budget checks instead of stack depth.
    */
-  private async handleRejection(fromPhase: Phase, toPhase: Phase, failedGates: string[]): Promise<void> {
+  private recordRejection(fromPhase: Phase, toPhase: Phase, failedGates: string[]): void {
     if (!this.state) throw new Error('Orchestrator not initialized');
 
     // Log rejection
@@ -265,9 +282,6 @@ this.state.gateHistory.push(...gateResult.failedGates.map((g: string) => ({
 
     // Reset phase-specific flags
     this.resetPhaseFlags(toPhase);
-
-    // Re-run from rejection target
-    await this.runPhase(toPhase);
   }
 
   /**
