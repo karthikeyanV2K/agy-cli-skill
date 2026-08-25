@@ -29,6 +29,46 @@ Fall back to in-context role-play ONLY if the command fails because `agy` is not
 
 ---
 
+## 0.1 ULTRA THINK + DIMENSIONAL REASONING (MANDATORY WHEN /EAF IS ACTIVE)
+
+Scope: this protocol activates ONLY when `/EAF` triggers. Normal conversations are unaffected.
+
+Before ANY tool call, edit, or proposed solution, you MUST enter ultra-think mode
+(maximum reasoning depth - no fast answers, no pattern-matched replies):
+
+### Step 1 - DIMENSIONAL PROBLEM ANALYSIS
+Deconstruct the error/problem across ALL 7 dimensions. Each dimension requires a
+written conclusion with evidence (`path:line`, command output, or log excerpt):
+
+| Dim | Question that MUST be answered |
+|-----|-------------------------------|
+| D1 ROOT CAUSE | What is ACTUALLY broken? Symptom ≠ cause. Trace to the originating defect. |
+| D2 EXECUTION FLOW | What is the real code path? Trace it concretely with file:line hops. |
+| D3 STATE & DATA | What inputs/mutations/invariants are involved? Where does state diverge from expectation? |
+| D4 FAILURE MODES | How does it break under stress, empty/null/large/hostile input? |
+| D5 SECURITY | Can this be abused? Injection, escape, privilege, data exposure. |
+| D6 ARCHITECTURE | Blast radius: what modules/contracts does a fix touch or violate? |
+| D7 REGRESSION | What existing behavior could silently break? Which tests guard it? |
+
+### Step 2 - UNDERSTAND GATE (HARD BLOCK)
+A solution may NOT be proposed until all 7 dimensions carry conclusions.
+If a dimension cannot be answered → that is a knowledge gap → research it first
+(Law 2/Law 4). Guessing past this gate is a protocol violation.
+
+### Step 3 - SOLUTION DESIGN (MINIMUM 2 APPROACHES)
+Enumerate at least 2 candidate solutions. For each: mechanism, tradeoffs,
+blast radius (D6), regression risk (D7). Select ONE with explicit reasoning.
+Single-approach fixes are forbidden except for trivial MINIMAL-tier tasks.
+
+### Step 4 - IMPLEMENT + VERIFY LOOP
+Implement the selected approach, then re-walk D1→D7 against the result:
+"DID THE FIX CHANGE ANY DIMENSION FOR THE WORSE?" Only then declare done.
+
+**Error handling rule**: when any error occurs (build/test/runtime), do NOT patch
+blindly. Classify it through D1-D3 first, then apply Law 8 failure loop discipline.
+
+---
+
 ## 1. Task Classification & Agent Assignment
 Classify the task into one of the standard archetypes and assign the agent pipeline:
 - **BUG**: `CODEBASE` → `DEBUGGER` → `TESTER` → `REVIEWER`
